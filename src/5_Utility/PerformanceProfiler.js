@@ -63,8 +63,7 @@ export default class PerformanceProfiler {
 			message += `\tTotal Duration: ${funcData.totalExecutionTime} ms\n`;
 			message += `\tAverage Duration: ${(funcData.totalExecutionTime / funcData.timesCalled).toFixed(2)} ms\n`
 			message += `\tNum Calls: ${funcData.timesCalled}\n`;
-			//if (!funcData.isInnerFunctionCall) combinedTotalExecutionTime += funcData.totalExecutionTime;
-			combinedTotalExecutionTime += funcData.totalExecutionTime;	// adding all function calls to total execution time, including inner functions
+			if (!funcData.isInnerFunctionCall) combinedTotalExecutionTime += funcData.totalExecutionTime;
 		}
 		message += `\nCombined Total Duration: ${combinedTotalExecutionTime} ms`;
 
@@ -78,7 +77,7 @@ export default class PerformanceProfiler {
 
 		for (const [funcName, funcData] of this.data) {
 			obj[`${funcName}`] = funcData.totalExecutionTime;
-			combinedTotalExecutionTime += funcData.totalExecutionTime;	// adding all function calls to total execution time, including inner functions
+			if (!funcData.isInnerFunctionCall) combinedTotalExecutionTime += funcData.totalExecutionTime;
 		}
 		obj["total"] = combinedTotalExecutionTime;
 
