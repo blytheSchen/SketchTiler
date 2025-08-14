@@ -112,7 +112,9 @@ export default class Demo_WFC extends Phaser.Scene {
       this.numRuns = parseInt(e.target.value);
     });
 
-    document.getElementById("generateBtn").addEventListener("click", async () => runWithSpinner(() => this.generateMap()));
+    document.getElementById("generateBtn").addEventListener("click", async () => 
+      runWithSpinner(async () => await this.getAverageGenerationDuration(1, this.printAveragePerformance))
+    );
     document.getElementById("clearBtn").addEventListener("click", () => this.clearMap());
     document.getElementById("averageBtn").addEventListener("click", async () => 
       runWithSpinner(async () => await this.getAverageGenerationDuration(this.numRuns, this.printAveragePerformance))
@@ -123,7 +125,9 @@ export default class Demo_WFC extends Phaser.Scene {
     this.clear_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
     this.timedRuns_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
 
-    this.runWFC_Key.on("down", () => this.generateMap());
+    this.runWFC_Key.on("down", () => 
+      runWithSpinner(async () => await this.getAverageGenerationDuration(1, this.printAveragePerformance))
+    );
     this.clear_Key.on("down", () => this.clearMap());
     this.timedRuns_Key.on("down", async () => 
       await this.getAverageGenerationDuration(this.numRuns, this.printAveragePerformance)
@@ -206,10 +210,10 @@ export default class Demo_WFC extends Phaser.Scene {
 
     if(print){ 
       const outputElement = document.getElementById("profileMessage");
-      const message = this.printAverages(avg, numRuns);
+      const message = this.printProfile(avg, numRuns);
       
       outputElement.innerHTML = message.replace(/\n/g, '<br>');
-      console.log(this.printAverages(avg, numRuns));
+      console.log(this.printProfile(avg, numRuns));
     }
     // console.log(avg);
 
@@ -232,7 +236,7 @@ export default class Demo_WFC extends Phaser.Scene {
     return sum;
   }
 
-  printAverages(averages, numRuns){
+  printProfile(averages, numRuns = 1){
     let message = `==========================================\n`;
     message += `Average performance over ${numRuns} runs:\n`;
     for (const [modelName, modelProfile] of Object.entries(averages)) {
