@@ -35,7 +35,7 @@ export default class ImageLearner {
    * @param {number} N The width and height of the patterns.
    * @param {bool} profile Whether to profile the performance of this function or not.
    */
-  learn(images, N, profile) {
+  learn(images, N, profile, printPatterns = false) {
     this.patterns = [];
     this.weights = [];
     this.adjacencies = [];
@@ -49,6 +49,9 @@ export default class ImageLearner {
     this.getTilesToPatterns();
 
     if (profile) this.performanceProfiler.logData();
+    if(printPatterns){
+      return this.patterns;
+    }
   }
 
   /**

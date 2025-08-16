@@ -21,9 +21,10 @@ export default class WFCModel {
    * @param {number} N The width and height of the patterns.
    * @param {bool} profile (Default false) Whether to profile the performance of this function or not.
    */
-  learn(images, N, profile = false) {
-    this.imageLearner.learn(images, N, profile);
+  learn(images, N, profile = false, printPatterns = false) {
+    this.patterns = this.imageLearner.learn(images, N, profile, printPatterns);
     this.clearSetTiles();
+
     return this;
   }
 

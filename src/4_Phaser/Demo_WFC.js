@@ -12,7 +12,10 @@ export default class Demo_WFC extends Phaser.Scene {
   displayedMapID = 3;	// check assets folder to see all maps  
 
   N = 2;
+  tileSize = 16;
+
   profileLearning = false;
+  printPatterns = true;
 
   // width & height for entire maps should have an 8:5 ratio (e.g. 24x15, 40x25)
   width = 40;
@@ -25,8 +28,8 @@ export default class Demo_WFC extends Phaser.Scene {
   numRuns = 100;	// for this.getAverageGenerationDuration()
   printAveragePerformance = true;
 
-  groundModel = new WFCModel().learn(IMAGES.GROUND, this.N, this.profileLearning);
-  structuresModel = new WFCModel().learn(IMAGES.STRUCTURES, this.N, this.profileLearning);
+  groundModel = new WFCModel().learn(IMAGES.GROUND, this.N, this.profileLearning, this.printPatterns);
+  structuresModel = new WFCModel().learn(IMAGES.STRUCTURES, this.N, this.profileLearning, this.printPatterns);
 
   constructor() {
     super("wfcTestingScene");
@@ -41,6 +44,9 @@ export default class Demo_WFC extends Phaser.Scene {
   create() {
     this.showInputImage();
     this.setupControls();
+    console.log(this.groundModel)
+
+    if(this.printPatterns) this.displayPatterns(this.structuresModel.patterns);
   }
 
   showInputImage() {
@@ -172,13 +178,13 @@ export default class Demo_WFC extends Phaser.Scene {
 
     this.groundMap = this.make.tilemap({
       data: groundImage,
-      tileWidth: 16,
-      tileHeight: 16
+      tileWidth: this.tileSize,
+      tileHeight: this.tileSize
     });
     this.structuresMap = this.make.tilemap({
       data: structuresImage,
-      tileWidth: 16,
-      tileHeight: 16
+      tileWidth: this.tileSize,
+      tileHeight: this.tileSize
     });
     
     this.groundMap.createLayer(0, this.tileset, 0, 0);
@@ -186,6 +192,45 @@ export default class Demo_WFC extends Phaser.Scene {
 
     for (const layer of this.multiLayerMapLayers) layer.setVisible(false);
   }	
+
+  displayPatterns(patterns) {
+    this.tilesetImage = this.textures.get('tilemap').getSourceImage();
+    this.tilesetColumns = this.tilesetImage.width / this.tileSize;
+
+    const panel = document.getElementById('pattern-panel');
+    panel.innerHTML = ''; // clear old patterns
+
+    patterns.forEach((pattern, index) => {
+      // create an offscreen canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = this.N * this.tileSize;
+      canvas.height = this.N * this.tileSize;
+      const ctx = canvas.getContext('2d');
+
+      // draw tiles 
+      pattern.forEach((row, y) => {
+        row.forEach((tileIndex, x) => {
+          tileIndex -= 1;
+          const tileX = tileIndex % this.tilesetColumns; // tileset columns
+          const tileY = Math.floor(tileIndex / this.tilesetColumns);
+          ctx.drawImage(
+            this.tilesetImage, // HTMLImageElement from phaser loader
+            tileX * this.tileSize, tileY * this.tileSize, 
+            this.tileSize, this.tileSize,
+            x * this.tileSize, y * this.tileSize, 
+            this.tileSize, this.tileSize
+          );
+        });
+
+        ctx.strokeStyle = "#fff"; // white border (change as needed)
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0, 0, canvas.width, canvas.height);
+      });
+
+      // Append to panel
+      panel.appendChild(canvas);
+    });
+  }
 
   async getAverageGenerationDuration(numRuns, print) {
     let profiles = [];

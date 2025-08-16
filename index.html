@@ -33,7 +33,16 @@
           <button id="generate-button" class="button is-light">Generate</button>
           <button id="clear-button" class="button is-light">Clear</button>
         </div>
-        <div id="phaser"></div>
+        <div style="display:flex;  height:100vh; overflow:hidden; gap: 1em;">
+          <div id="phaser"></div>
+          <div id="pattern-panel" style="
+            width: 500px;
+            height: 400px;
+            overflow-y: auto;
+            background: #222;
+            padding: 10px;
+          "></div>
+        </div>
       </div>
       <div id="instructions" class="content">
         <h2 class="title is-2">SketchTiler - the sketch to tilemap application</h2>
