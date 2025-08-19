@@ -19,7 +19,7 @@ export default class Layout{
         this.structureTypes = structureTypes;
 
         // init this.layoutMap with empty tiles
-        this.layoutMap = Array.from({ length: this.mapData.length }, () => Array(this.mapData[0].length).fill(-1));
+        this.layoutMap = Array.from({ length: this.mapData.length }, () => Array(this.mapData[0].length).fill(0));
         this.worldFacts = [];
 
         // Populate layout data

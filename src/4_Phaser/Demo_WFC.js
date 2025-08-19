@@ -40,6 +40,8 @@ export default class Demo_WFC extends Phaser.Scene {
     this.load.setPath("./assets/");
     this.load.image("tilemap", "tinyTown_Tilemap_Packed.png");
     this.load.tilemapTiledJSON("tinyTownMap", `maps/map${this.displayedMapID}.tmj`);
+
+    this.load.image("colorTiles", "colorTilemap_Packed.png");
   }
 
   create() {
@@ -319,43 +321,43 @@ export default class Demo_WFC extends Phaser.Scene {
   }
 
   colorBlock(){
-    const MIN_STRUCTURE_SIZE = 2;
+    const MIN_STRUCTURE_SIZE = 3;
     const STRUCTURE_TYPES = {
       house: {
         regionType: "box",
         color: 1,
         tileIDs: [
-            49, 50, 51, 52, 53, 54, 55, 56,
-            61, 62, 63, 64, 65, 66, 67, 68,
-            73, 74, 75, 76, 77, 78, 79, 80,
-            85, 86, 87, 88, 89, 90, 91, 92
+          49, 50, 51, 52, 53, 54, 55, 56,
+          61, 62, 63, 64, 65, 66, 67, 68,
+          73, 74, 75, 76, 77, 78, 79, 80,
+          85, 86, 87, 88, 89, 90, 91, 92
         ],
       },
       fence: {
         regionType: "trace",
         color: 2,
         tileIDs: [
-            45, 46, 47, 48, 
-            57, 59, 60, 
-            69, 70, 71, 72, 
-            81, 82, 83
+          45, 46, 47, 48, 
+          57, 59, 60, 
+          69, 70, 71, 72, 
+          81, 82, 83
         ]
       },
       forest: {
         regionType: "box",
         color: 3,
         tileIDs: [
-            4, 5, 7, 8, 9, 10, 11, 12,
-            16, 17, 18, 19, 20, 21, 22, 23, 24, 
-            28, 29, 30, 31, 32, 33, 34, 35, 36,
-            107, 95
+          4, 5, 7, 8, 9, 10, 11, 12,
+          16, 17, 18, 19, 20, 21, 22, 23, 24, 
+          28, 29, 30, 31, 32, 33, 34, 35, 36,
+          107, 95
         ],
       },
       path: {
         regionType: "trace",
         color: 4,
         tileIDs: [
-            40, 41, 42, 43, 44
+          26, 40, 41, 42, 43, 44
         ],
       }
     };
@@ -367,8 +369,8 @@ export default class Demo_WFC extends Phaser.Scene {
     );
 
     console.log(layout)
-    this.fillTiles(layout.getWorldFacts());
-    this.makeMetaTileLayer(layout.getLayoutMap(), this.tileset);
+    //this.fillTiles(layout.getWorldFacts());
+    this.makeMetaTileLayer(layout.getLayoutMap(), "colorTiles");
 
     this.overlayToggle.disabled = false;
     this.colorBlockButton.disabled = true;
@@ -378,10 +380,11 @@ export default class Demo_WFC extends Phaser.Scene {
   // TODO: refactor this function into a global util
   fillTiles(layoutData) {
     const COLORS = [
+      "#0f0f0f",
       "#f54242",
-      "#f5c842",
       "#009632",
       "#0000ff",
+      "#f5c842",
     ];
 
     // init colorblock gfx with black bg
@@ -392,7 +395,7 @@ export default class Demo_WFC extends Phaser.Scene {
     );
 
     for(let structure of layoutData){
-      let color = COLORS[structure.color - 1];
+      let color = COLORS[structure.color];
       color = color.replace(/\#/g, "0x"); // make hex-formatted color readable for phaser
       this.colorblockGFX.fillStyle(color);
 
@@ -416,15 +419,15 @@ export default class Demo_WFC extends Phaser.Scene {
     }
   }
 
-  makeMetaTileLayer(layoutMap, tileset){
+  makeMetaTileLayer(layoutMap, tilesetName){
     this.metaMap = this.make.tilemap({
       data: layoutMap,
       tileWidth: this.tileSize,
       tileHeight: this.tileSize
     });
 
-    this.metaTileLayer = this.metaMap.createLayer(0, tileset, 0, 0);
-
+    let tiles = this.metaMap.addTilesetImage("colors", tilesetName);
+    this.metaTileLayer = this.metaMap.createLayer(0, tiles, 0, 0);
   }
 
 }
