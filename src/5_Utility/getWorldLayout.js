@@ -40,8 +40,6 @@ export default class Layout{
                     let w = startX + structureFacts.boundingBox.width;
                     let h = startY + structureFacts.boundingBox.height;
                     
-                    console.log(structureType, startX, startY, w, h)
-
                     for(let x = startX; x < w; x++){
                         for(let y = startY; y < h; y++){
                             this.layoutMap[y][x] = structureConfig.color;

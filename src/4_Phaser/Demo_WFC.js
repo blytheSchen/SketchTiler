@@ -368,8 +368,6 @@ export default class Demo_WFC extends Phaser.Scene {
       STRUCTURE_TYPES
     );
 
-    console.log(layout)
-    //this.fillTiles(layout.getWorldFacts());
     this.makeMetaTileLayer(layout.getLayoutMap(), "colorTiles");
 
     this.overlayToggle.disabled = false;
@@ -378,6 +376,7 @@ export default class Demo_WFC extends Phaser.Scene {
 
   // TEMP: just copied the logic here from Demo_Sketch.js for now
   // TODO: refactor this function into a global util
+  // visualizer/debug
   fillTiles(layoutData) {
     const COLORS = [
       "#0f0f0f",
