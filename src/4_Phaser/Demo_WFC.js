@@ -2,7 +2,7 @@ import Phaser from "../../lib/phaserModule.js";
 import WFCModel from "../2_WFC/1_Model/wfcModel.js";
 import IMAGES from "../2_WFC/2_Input/images.js";
 import generateHouse from "../3_Generators/generateHouse.js";
-import getWorldFacts from "../5_Utility/getWorldLayout.js";
+import Layout from "../5_Utility/getWorldLayout.js";
 
 // hide sketchpad elements
 document.getElementById("sketchpad").classList.add("hidden");
@@ -133,7 +133,8 @@ export default class Demo_WFC extends Phaser.Scene {
     this.colorBlockButton.addEventListener("click", () => this.colorBlock())
     this.overlayToggle = document.getElementById('overlay-toggle');
     this.overlayToggle.addEventListener("click", () => {
-      this.fillTiles_gfx.setVisible(this.overlayToggle.checked);
+      if(this.colorblockGFX) this.colorblockGFX.setVisible(this.overlayToggle.checked);
+      if(this.metaTileLayer) this.metaTileLayer.setVisible(this.overlayToggle.checked);
     });
 
     document.getElementById("numRunsInput").addEventListener("change", (e) => {
@@ -192,7 +193,6 @@ export default class Demo_WFC extends Phaser.Scene {
   displayMap(groundImage, structuresImage) {
     if (this.groundMap) this.groundMap.destroy();
     if (this.structuresMap) this.structuresMap.destroy();
-
     this.groundMap = this.make.tilemap({
       data: groundImage,
       tileWidth: this.tileSize,
@@ -319,17 +319,56 @@ export default class Demo_WFC extends Phaser.Scene {
   }
 
   colorBlock(){
-    // init colorblock gfx with black bg
-    this.fillTiles_gfx = this.add.graphics();
-    this.fillTiles_gfx.fillStyle("0x000000", 1);
-    this.fillTiles_gfx.fillRect(
-      0, 0, this.width * this.tileSize, this.height * this.tileSize
+    const MIN_STRUCTURE_SIZE = 2;
+    const STRUCTURE_TYPES = {
+      house: {
+        regionType: "box",
+        color: 1,
+        tileIDs: [
+            49, 50, 51, 52, 53, 54, 55, 56,
+            61, 62, 63, 64, 65, 66, 67, 68,
+            73, 74, 75, 76, 77, 78, 79, 80,
+            85, 86, 87, 88, 89, 90, 91, 92
+        ],
+      },
+      fence: {
+        regionType: "trace",
+        color: 2,
+        tileIDs: [
+            45, 46, 47, 48, 
+            57, 59, 60, 
+            69, 70, 71, 72, 
+            81, 82, 83
+        ]
+      },
+      forest: {
+        regionType: "box",
+        color: 3,
+        tileIDs: [
+            4, 5, 7, 8, 9, 10, 11, 12,
+            16, 17, 18, 19, 20, 21, 22, 23, 24, 
+            28, 29, 30, 31, 32, 33, 34, 35, 36,
+            107, 95
+        ],
+      },
+      path: {
+        regionType: "trace",
+        color: 4,
+        tileIDs: [
+            40, 41, 42, 43, 44
+        ],
+      }
+    };
+
+    let layout = new Layout(
+      {layers: this.multiLayerMapLayers}, 
+      MIN_STRUCTURE_SIZE, 
+      STRUCTURE_TYPES
     );
 
-    let layout = getWorldFacts({ layers: this.multiLayerMapLayers });
-    for(let structure of layout){
-      this.fillTiles(this.fillTiles_gfx, structure);
-    }
+    console.log(layout)
+    this.fillTiles(layout.getWorldFacts());
+    this.makeMetaTileLayer(layout.getLayoutMap(), this.tileset);
 
     this.overlayToggle.disabled = false;
     this.colorBlockButton.disabled = true;
@@ -337,28 +376,55 @@ export default class Demo_WFC extends Phaser.Scene {
 
   // TEMP: just copied the logic here from Demo_Sketch.js for now
   // TODO: refactor this function into a global util
-  fillTiles(gfx, structure) {
-    let color = structure.color;
-    color = color.replace(/\#/g, "0x"); // make hex-formatted color readable for phaser
-    gfx.fillStyle(color);
+  fillTiles(layoutData) {
+    const COLORS = [
+      "#f54242",
+      "#f5c842",
+      "#009632",
+      "#0000ff",
+    ];
 
-    // data should have all coords to be filled as an array of {x, y}
-    if (structure.trace) {
-      let data = structure.trace;
+    // init colorblock gfx with black bg
+    this.colorblockGFX = this.add.graphics();
+    this.colorblockGFX.fillStyle("0x000000", 1);
+    this.colorblockGFX.fillRect(
+      0, 0, this.width * this.tileSize, this.height * this.tileSize
+    );
 
-      for (let i = 0; i < data.length; i++) {
-        let { x, y } = data[i];
-        gfx.fillRect(this.tileSize * x, this.tileSize * y, this.tileSize, this.tileSize);
+    for(let structure of layoutData){
+      let color = COLORS[structure.color - 1];
+      color = color.replace(/\#/g, "0x"); // make hex-formatted color readable for phaser
+      this.colorblockGFX.fillStyle(color);
+
+      // data should have all coords to be filled as an array of {x, y}
+      if (structure.trace) {
+        let data = structure.trace;
+
+        for (let i = 0; i < data.length; i++) {
+          let { x, y } = data[i];
+          this.colorblockGFX.fillRect(this.tileSize * x, this.tileSize * y, this.tileSize, this.tileSize);
+        }
+      } else {
+        let data = structure.boundingBox;
+        this.colorblockGFX.fillRect(
+          data.topLeft.x * this.tileSize, 
+          data.topLeft.y * this.tileSize, 
+          data.width  * this.tileSize, 
+          data.height * this.tileSize
+        );
       }
-    } else {
-      let data = structure.boundingBox;
-      gfx.fillRect(
-        data.topLeft.x * this.tileSize, 
-        data.topLeft.y * this.tileSize, 
-        data.width  * this.tileSize, 
-        data.height * this.tileSize
-      );
     }
+  }
+
+  makeMetaTileLayer(layoutMap, tileset){
+    this.metaMap = this.make.tilemap({
+      data: layoutMap,
+      tileWidth: this.tileSize,
+      tileHeight: this.tileSize
+    });
+
+    this.metaTileLayer = this.metaMap.createLayer(0, tileset, 0, 0);
+
   }
 
 }
