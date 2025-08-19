@@ -2,6 +2,7 @@ import Phaser from "../../lib/phaserModule.js";
 import WFCModel from "../2_WFC/1_Model/wfcModel.js";
 import IMAGES from "../2_WFC/2_Input/images.js";
 import generateHouse from "../3_Generators/generateHouse.js";
+import getWorldFacts from "../5_Utility/getWorldLayout.js";
 
 // hide sketchpad elements
 document.getElementById("sketchpad").classList.add("hidden");
@@ -44,7 +45,6 @@ export default class Demo_WFC extends Phaser.Scene {
   create() {
     this.showInputImage();
     this.setupControls();
-    console.log(this.groundModel)
 
     if(this.printPatterns) this.displayPatterns(this.structuresModel.patterns);
   }
@@ -88,6 +88,16 @@ export default class Demo_WFC extends Phaser.Scene {
       <div class="buttons mt-3">
         <button id="generateBtn" class="button is-primary">Generate</button>
         <button id="clearBtn" class="button is-warning">Clear</button>
+        <button id="colorBlockingBtn" class="button is-outline-info">Color block</button>
+        <span id="overlay">
+          <input id="overlay-toggle"
+            type="checkbox" 
+            class="onoffswitch-checkbox"  
+            checked="false"
+            disabled
+          />
+          Toggle overlay
+        </span>
       </div>
       
       <div class="field">
@@ -114,14 +124,21 @@ export default class Demo_WFC extends Phaser.Scene {
       <progress id="progressBar" class="progress is-info" value="0" max="100">0%</progress>
     `;
 
-    document.getElementById("numRunsInput").addEventListener("change", (e) => {
-      this.numRuns = parseInt(e.target.value);
-    });
-
     document.getElementById("generateBtn").addEventListener("click", async () => 
       runWithSpinner(async () => await this.getAverageGenerationDuration(1, this.printAveragePerformance))
     );
     document.getElementById("clearBtn").addEventListener("click", () => this.clearMap());
+    
+    this.colorBlockButton = document.getElementById("colorBlockingBtn")
+    this.colorBlockButton.addEventListener("click", () => this.colorBlock())
+    this.overlayToggle = document.getElementById('overlay-toggle');
+    this.overlayToggle.addEventListener("click", () => {
+      this.fillTiles_gfx.setVisible(this.overlayToggle.checked);
+    });
+
+    document.getElementById("numRunsInput").addEventListener("change", (e) => {
+      this.numRuns = parseInt(e.target.value);
+    });
     document.getElementById("averageBtn").addEventListener("click", async () => 
       runWithSpinner(async () => await this.getAverageGenerationDuration(this.numRuns, this.printAveragePerformance))
     );
@@ -300,6 +317,50 @@ export default class Demo_WFC extends Phaser.Scene {
     if (this.groundMap) this.groundMap.destroy();
     if (this.structuresMap) this.structuresMap.destroy();
   }
+
+  colorBlock(){
+    // init colorblock gfx with black bg
+    this.fillTiles_gfx = this.add.graphics();
+    this.fillTiles_gfx.fillStyle("0x000000", 1);
+    this.fillTiles_gfx.fillRect(
+      0, 0, this.width * this.tileSize, this.height * this.tileSize
+    );
+
+    let layout = getWorldFacts({ layers: this.multiLayerMapLayers });
+    for(let structure of layout){
+      this.fillTiles(this.fillTiles_gfx, structure);
+    }
+
+    this.overlayToggle.disabled = false;
+    this.colorBlockButton.disabled = true;
+  }
+
+  // TEMP: just copied the logic here from Demo_Sketch.js for now
+  // TODO: refactor this function into a global util
+  fillTiles(gfx, structure) {
+    let color = structure.color;
+    color = color.replace(/\#/g, "0x"); // make hex-formatted color readable for phaser
+    gfx.fillStyle(color);
+
+    // data should have all coords to be filled as an array of {x, y}
+    if (structure.trace) {
+      let data = structure.trace;
+
+      for (let i = 0; i < data.length; i++) {
+        let { x, y } = data[i];
+        gfx.fillRect(this.tileSize * x, this.tileSize * y, this.tileSize, this.tileSize);
+      }
+    } else {
+      let data = structure.boundingBox;
+      gfx.fillRect(
+        data.topLeft.x * this.tileSize, 
+        data.topLeft.y * this.tileSize, 
+        data.width  * this.tileSize, 
+        data.height * this.tileSize
+      );
+    }
+  }
+
 }
 
 async function runWithSpinner(task) {
