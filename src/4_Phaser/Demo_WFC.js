@@ -29,8 +29,8 @@ export default class Demo_WFC extends Phaser.Scene {
   numRuns = 100;	// for this.getAverageGenerationDuration()
   printAveragePerformance = true;
 
-  groundModel = new WFCModel().learn(IMAGES.GROUND, this.N, this.profileLearning, this.printPatterns);
-  structuresModel = new WFCModel().learn(IMAGES.STRUCTURES, this.N, this.profileLearning, this.printPatterns);
+  //groundModel = new WFCModel().learn(IMAGES.GROUND, this.N, this.profileLearning, this.printPatterns);
+  //structuresModel = new WFCModel().learn(IMAGES.STRUCTURES, this.N, this.profileLearning, this.printPatterns);
 
   constructor() {
     super("wfcTestingScene");
@@ -48,7 +48,9 @@ export default class Demo_WFC extends Phaser.Scene {
     this.showInputImage();
     this.setupControls();
 
-    if(this.printPatterns) this.displayPatterns(this.structuresModel.patterns);
+    this.colorBlock();
+
+    if(this.printPatterns) this.displayPatterns(this.metaModel.patterns, "colorTiles");
   }
 
   showInputImage() {
@@ -126,11 +128,15 @@ export default class Demo_WFC extends Phaser.Scene {
       <progress id="progressBar" class="progress is-info" value="0" max="100">0%</progress>
     `;
 
+    /* GENERATE */
     document.getElementById("generateBtn").addEventListener("click", async () => 
       runWithSpinner(async () => await this.getAverageGenerationDuration(1, this.printAveragePerformance))
     );
+    
+    /* CLEAR */
     document.getElementById("clearBtn").addEventListener("click", () => this.clearMap());
     
+    /* COLOR BLOCK */
     this.colorBlockButton = document.getElementById("colorBlockingBtn")
     this.colorBlockButton.addEventListener("click", () => this.colorBlock())
     this.overlayToggle = document.getElementById('overlay-toggle');
@@ -139,6 +145,7 @@ export default class Demo_WFC extends Phaser.Scene {
       if(this.metaTileLayer) this.metaTileLayer.setVisible(this.overlayToggle.checked);
     });
 
+    /* GET AVERAGE */
     document.getElementById("numRunsInput").addEventListener("change", (e) => {
       this.numRuns = parseInt(e.target.value);
     });
@@ -146,7 +153,7 @@ export default class Demo_WFC extends Phaser.Scene {
       runWithSpinner(async () => await this.getAverageGenerationDuration(this.numRuns, this.printAveragePerformance))
     );
 
-    // legacy keys
+    /* LEGACY KEYS */
     this.runWFC_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.G);
     this.clear_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
     this.timedRuns_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
@@ -160,7 +167,28 @@ export default class Demo_WFC extends Phaser.Scene {
     );
   }
 
+  generateMetaMap(profile = false){
+    console.log("Using model for meta tiles");
+    const metaImage = this.metaModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
+    if (!metaImage) return;
+
+    const bgImage  = Array.from({ length: this.height }, () => Array(this.width).fill(0));
+
+    this.displayMap(bgImage, metaImage, "colorTiles");
+    document.getElementById("thinking-icon").style.display = "none"; // hide
+  }
+
   generateMap(profile = false){
+    this.generateMetaMap(profile);
+
+    // return performance profiles for models used
+    if(profile){
+      return {
+        metaTiles: this.metaModel.performanceProfile,
+      }
+    }
+
+    /*
     console.log("Using model for ground");
     const groundImage = this.groundModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
     if (!groundImage) return;
@@ -168,20 +196,9 @@ export default class Demo_WFC extends Phaser.Scene {
     console.log("Using model for structures");
     const structuresImage = this.structuresModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
     if (!structuresImage) return;
-    
-    /*
-    console.log("Using house generator");
-    const structuresImage = generateHouse({
-      topLeft: { x: 0, y: 0 },
-      bottomRight: { x: this.width-1, y: this.height-1 },
-      width: this.width,
-      height: this.height
-    });
-    if (!structuresImage) return;
-    */
 
     this.displayMap(groundImage, structuresImage);
-    document.getElementById("thinking-icon").style.display = "none";        // hide
+    document.getElementById("thinking-icon").style.display = "none"; // hide
 
     // return performance profiles for models used
     if(profile){
@@ -190,11 +207,13 @@ export default class Demo_WFC extends Phaser.Scene {
         structs: this.structuresModel.performanceProfile,
       }
     }
+    */
   }
 
-  displayMap(groundImage, structuresImage) {
+  displayMap(groundImage, structuresImage, tilesetName) {
     if (this.groundMap) this.groundMap.destroy();
     if (this.structuresMap) this.structuresMap.destroy();
+
     this.groundMap = this.make.tilemap({
       data: groundImage,
       tileWidth: this.tileSize,
@@ -205,15 +224,17 @@ export default class Demo_WFC extends Phaser.Scene {
       tileWidth: this.tileSize,
       tileHeight: this.tileSize
     });
+
+    let tileset = this.structuresMap.addTilesetImage("meep", tilesetName);
     
-    this.groundMap.createLayer(0, this.tileset, 0, 0);
-    this.structuresMap.createLayer(0, this.tileset, 0, 0);
+    this.groundMap.createLayer(0, tileset, 0, 0);
+    this.structuresMap.createLayer(0, tileset, 0, 0);
 
     for (const layer of this.multiLayerMapLayers) layer.setVisible(false);
   }	
 
-  displayPatterns(patterns) {
-    this.tilesetImage = this.textures.get('tilemap').getSourceImage();
+  displayPatterns(patterns, tilesetName, indexOffset = 0) {
+    this.tilesetImage = this.textures.get(tilesetName).getSourceImage();
     this.tilesetColumns = this.tilesetImage.width / this.tileSize;
 
     const panel = document.getElementById('pattern-panel');
@@ -229,7 +250,7 @@ export default class Demo_WFC extends Phaser.Scene {
       // draw tiles 
       pattern.forEach((row, y) => {
         row.forEach((tileIndex, x) => {
-          tileIndex -= 1;
+          tileIndex -= indexOffset;
           const tileX = tileIndex % this.tilesetColumns; // tileset columns
           const tileY = Math.floor(tileIndex / this.tilesetColumns);
           ctx.drawImage(
@@ -335,7 +356,7 @@ export default class Demo_WFC extends Phaser.Scene {
       },
       fence: {
         regionType: "trace",
-        color: 2,
+        color: 3,
         tileIDs: [
           45, 46, 47, 48, 
           57, 59, 60, 
@@ -345,7 +366,7 @@ export default class Demo_WFC extends Phaser.Scene {
       },
       forest: {
         regionType: "box",
-        color: 3,
+        color: 2,
         tileIDs: [
           4, 5, 7, 8, 9, 10, 11, 12,
           16, 17, 18, 19, 20, 21, 22, 23, 24, 
@@ -369,6 +390,9 @@ export default class Demo_WFC extends Phaser.Scene {
     );
 
     this.makeMetaTileLayer(layout.getLayoutMap(), "colorTiles");
+
+    console.log(layout.getLayoutMap())
+    this.metaModel = new WFCModel().learn([layout.getLayoutMap()], this.N, this.profileLearning, this.printPatterns);
 
     this.overlayToggle.disabled = false;
     this.colorBlockButton.disabled = true;
