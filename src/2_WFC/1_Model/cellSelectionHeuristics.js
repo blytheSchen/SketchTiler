@@ -1,3 +1,5 @@
+/** @typedef {import("./Matrix.js").default} Matrix */
+
 /**
  * Iterates through `waveMatrix` from left to right, top to bottom,
  * returning the position of the first unsolved `Cell` encountered.
@@ -6,17 +8,17 @@
  * This heuristic is not suitable for all tilesets.
  * However, Tiny Town is not one of those tilesets.
  * 
- * @param {Cell[][]} waveMatrix A 2D grid of `Cell`s, where each `Cell` corresponds to a tile in the image being generated and stores the possible patterns that tile can yield from.
- * @param {Uint32Array} lastObservedCellPosition The [y, x] coordinate of the last cell that was observed. Used to skip the processing of already observed `Cell`s.
- * @returns {Uint32Array | null} The [y, x] coordinate of the `Cell` to observe. If all cells are solved, returns `null`.
+ * @param {Matrix} waveMatrix A 2D grid of `Cell`s, where each `Cell` corresponds to a tile in the image being generated and stores the possible patterns that tile can yield from.
+ * @param {Uint32Array} lastObservedCellPosition The [x, y] coordinate of the last cell that was observed. Used to skip the processing of already observed `Cell`s.
+ * @returns {Uint32Array | null} The [x, y] coordinate of the `Cell` to observe. If all cells are solved, returns `null`.
  */
 export function lexical(waveMatrix, lastObservedCellPosition) {
-    let [startY, startX] = lastObservedCellPosition;
+    let [startX, startY] = lastObservedCellPosition;
 
-    for (let y = startY; y < waveMatrix.length; y++) {
-        for (let x = startX; x < waveMatrix[0].length; x++) {
-            const numPossiblePatterns = waveMatrix[y][x].toArray().length;
-            if (numPossiblePatterns > 1) return new Uint32Array([y, x]);
+    for (let y = startY; y < waveMatrix.height; y++) {
+        for (let x = startX; x < waveMatrix.width; x++) {
+            const numPossiblePatterns = waveMatrix.get(x, y).toArray().length;
+            if (numPossiblePatterns > 1) return new Uint32Array([x, y]);
         }
         startX = 0;
     }

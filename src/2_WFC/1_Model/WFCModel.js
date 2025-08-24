@@ -85,12 +85,12 @@ export default class WFCModel {
    */
   buildImage() {
     const image = [];
-    for (let y = 0; y < this.constraintSolver.waveMatrix.length; y++) image[y] = [];
+    for (let y = 0; y < this.constraintSolver.waveMatrix.height; y++) image[y] = [];
 
     // Build the image using the top left tile of each cell's chosen pattern
-    for (let y = 0; y < this.constraintSolver.waveMatrix.length; y++) {
-    for (let x = 0; x < this.constraintSolver.waveMatrix[0].length; x++) {
-      const chosenPatternIndex = this.constraintSolver.waveMatrix[y][x].toArray()[0];
+    for (let y = 0; y < this.constraintSolver.waveMatrix.height; y++) {
+    for (let x = 0; x < this.constraintSolver.waveMatrix.width; x++) {
+      const chosenPatternIndex = this.constraintSolver.waveMatrix.get(x, y).toArray()[0];
       const tileId = this.imageLearner.patterns[chosenPatternIndex][0][0];
       image[y][x] = tileId;
     }}

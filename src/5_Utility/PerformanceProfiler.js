@@ -60,12 +60,12 @@ export default class PerformanceProfiler {
 
 		for (const [funcName, funcData] of this.data) {
 			message += `${funcName}():\n`;
-			message += `\tTotal Duration: ${funcData.totalExecutionTime} ms\n`;
+			message += `\tTotal Duration: ${funcData.totalExecutionTime.toFixed(2)} ms\n`;
 			message += `\tAverage Duration: ${(funcData.totalExecutionTime / funcData.timesCalled).toFixed(2)} ms\n`
 			message += `\tNum Calls: ${funcData.timesCalled}\n`;
 			if (!funcData.isInnerFunctionCall) combinedTotalExecutionTime += funcData.totalExecutionTime;
 		}
-		message += `\nCombined Total Duration: ${combinedTotalExecutionTime} ms`;
+		message += `\nCombined Total Duration: ${combinedTotalExecutionTime.toFixed(2)} ms`;
 
 		console.log(message);
 	}

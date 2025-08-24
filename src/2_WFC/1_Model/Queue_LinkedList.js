@@ -6,7 +6,7 @@
 export default class Queue {
   front = null;
   back = null;
-  length = 0;
+  count = 0;
 
   /**
    * Adds `element` to the back of the queue.
@@ -16,7 +16,7 @@ export default class Queue {
   enqueue(element) {
     const node = new Node(element);
 
-    if (this.length === 0) {
+    if (this.count === 0) {
       this.front = node;
       this.back = node;
     } else {
@@ -24,7 +24,7 @@ export default class Queue {
       this.back = node;
     }
 
-    this.length++;
+    this.count++;
   }
 
   /**
@@ -32,11 +32,11 @@ export default class Queue {
    * @returns {any | undefined}
    */
   dequeue() {
-    if (this.length === 0) return undefined;
+    if (this.count === 0) return undefined;
 
     const element = this.front.data;
     this.front = this.front.next;
-    this.length--;
+    this.count--;
 
     if (!this.front) this.back = null; // if queue is now empty
 

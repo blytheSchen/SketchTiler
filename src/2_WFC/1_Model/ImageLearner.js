@@ -2,7 +2,7 @@ import PerformanceProfiler from "../../5_Utility/PerformanceProfiler.js";
 import BigBitmask from "./BigBitmask.js";
 import DIRECTIONS from "./DIRECTIONS.js";
 
-/** A component of the WFCModel that's responsible for gathering all data
+/** The component of the WFCModel that's responsible for gathering all data
  *  necessary for solving a wave matrix and generating an image from it. */
 export default class ImageLearner {
   /** Stores the tiles of every pattern.

@@ -1,7 +1,21 @@
-import Phaser from "../../lib/PhaserModule.js";
-import WFCModel from "../2_WFC/1_Model/WFCModel.js";
-import IMAGES from "../2_WFC/2_Input/IMAGES.js";
-import generateHouse from "../3_Generators/generateHouse.js";
+/*
+  START:
+  Generating 10 times took 18765.899999916553 ms, with an average duration of 1876.59 ms
+
+  Wave matrix made of FBBs:
+  Generating 10 times took 18742.799999952316 ms, with an average duration of 1874.28 ms
+
+  BigBitmask can now be given an ArrayBuffer:
+  Generating 10 times took 18238.399999916553 ms, with an average duration of 1823.84 ms
+
+  Queue_RingBuffer:
+  Generating 10 times took 22758.00 ms, with an average duration of 2275.80 ms
+*/
+
+import Phaser from "../../../lib/phaserModule.js";
+import WFCModel from "../../2_WFC/1_Model/WFCModel.js";
+import IMAGES from "../../2_WFC/2_Input/IMAGES.js";
+import generateHouse from "../../3_Generators/generateHouse.js";
 
 export default class WFC extends Phaser.Scene {
   displayedMapID = 3;	// check assets folder to see all maps  
@@ -10,13 +24,13 @@ export default class WFC extends Phaser.Scene {
   profileLearning = false;
 
   // width & height for entire maps should have an 8:5 ratio (e.g. 24x15, 40x25)
-  width = 4;
-  height = 15;
+  width =40;
+  height = 25;
   maxAttempts = 10;
   logProgress = true;
   profileSolving = true;
 
-  numRuns = 100;	// for this.getAverageGenerationDuration()
+  numRuns = 10; // for this.getAverageGenerationDuration()
 
   groundModel = new WFCModel().learn(IMAGES.GROUND, this.N, this.profileLearning);
   structuresModel = new WFCModel().learn(IMAGES.STRUCTURES, this.N, this.profileLearning);
@@ -83,12 +97,12 @@ export default class WFC extends Phaser.Scene {
     console.log("Using model for ground");
     const groundImage = this.groundModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving);
     if (!groundImage) return;
-    /*
+
     console.log("Using model for structures");
     const structuresImage = this.structuresModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving);
     if (!structuresImage) return;
-    */
-    
+
+    /*
     console.log("Using house generator");
     const structuresImage = generateHouse({
       topLeft: { x: 0, y: 0 },
@@ -97,7 +111,7 @@ export default class WFC extends Phaser.Scene {
       height: this.height
     });
     if (!structuresImage) return;
-    
+    */
 
     this.displayMap(groundImage, structuresImage);
   }
@@ -132,6 +146,6 @@ export default class WFC extends Phaser.Scene {
       totalDuration += duration;
       console.log(`Generation #${i} took ${duration.toFixed(2)} ms`)
     }
-    console.log(`Generating ${numRuns} times took ${totalDuration} ms, with an average duration of ${(totalDuration / numRuns).toFixed(2)} ms`)
+    console.log(`Generating ${numRuns} times took ${totalDuration.toFixed(2)} ms, with an average duration of ${(totalDuration / numRuns).toFixed(2)} ms`);
   }
 }

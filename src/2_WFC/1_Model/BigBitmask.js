@@ -1,14 +1,42 @@
 /**
+ * @fileoverview
+ * If you were to implement `data` in 'Matrix.js' as a single `ArrayBuffer`
+ * that stored the bytes for the `Uint32Arrays` of the `FasterFasterBigBitmasks` that are used by the cells constituting the wave matrix,
+ * you'd be approaching the limits of how optimized you can get with numeric arrays in JavaScript.
+ * This design maximizes sequential memory accessing and CPU cache efficiency.
+ * 
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array#different_ways_to_create_a_uint32array Look at the '// From an ArrayBuffer' section
+ * 
+ * Professor Adam Smith, during CMPM 121, was the one that first taught me
+ * that you could work with typed arrays and bytes in JavaScript just like you could in C/C++.
+ * 
+ * If you really need some help on this, you could contact him.
+ * He's also done research on WFC and is super knowledgeable on it in general.
+ */
+
+/**
  * Represents a bitmask that's able to store more bits than a standard integer bitmask (32 bits).
  * There are provided methods for interfacing with this class.
- * A BigBitmask is to a bitmask as a BigInt is to an number.
+ * A `BigBitmask` is to a bitmask as a `BigInt` is to a `number`.
  * 
  * Bitmask lingo for understanding methods:
+ * - 'Filled' bitmask         = a bitmask where all bits are 1.
  * - 'Empty/cleared' bitmask  = a bitmask where all bits are 0.
  * - 'Set' bit                = a bit with a value of 1.
  * - 'Unset' bit              = a bit with a value of 0.
  */
 export default class BigBitmask {
+  /** @type {number} */
+  static BITS_PER_BITMASK = 32;
+
+  /** @type {number} */
+  static BYTES_PER_BITMASK = 4;
+
+  /** @type {number} */
+  static UINT32_MAX_VALUE = 4294967295; // 2^32 - 1
+
   /**
    * Since bitmasks are just a collection of bits and so are integers (e.g. 1001 = 9), integers are bitmasks!
    * And since a single int has a size of 4 bytes meaning it can only store up to 32 bits,
@@ -19,10 +47,41 @@ export default class BigBitmask {
    * @type {Uint32Array}
    */
   bits;
+  
+  /**
+   * The number of bits this `BigBitmask` is supposed to mask.
+   * This value of `numBits` is not necessarily equal to the number of bits used by `bits`.
+   * TODO: explain why and this example better (e.g. `numBits` = 50, num bits in `bits` = 62)
+   * @type {number}
+   */
+  numBits;
 
-  /** @param {number} numBits In regards to WFC, this value is going to be equal to the number of patterns. */
-  constructor(numBits) {
-    this.bits = new Uint32Array(Math.ceil(numBits / 32));
+  /**
+   * @param {number} numBits In regards to WFC, this value is going to be equal to the number of patterns.
+   * @param {ArrayBuffer} [buffer] The `ArrayBuffer` storing the bits to this `BigBitmask` to use.
+   * @param {number} [byteOffset] The byte offset of this `BigBitmask`'s bits within `buffer`.
+   */
+  constructor(numBits, buffer = undefined, byteOffset = undefined) {
+    this.numBits = numBits;
+    this.bits = buffer
+      ? new Uint32Array(buffer, byteOffset, BigBitmask.bitsToBitmasks((numBits)))
+      : new Uint32Array(BigBitmask.bitsToBitmasks((numBits)));
+  }
+
+  /**
+   * Returns the minimum amount of bitmasks needed to store `numBits`.
+   * @param {number} numBits 
+   * @returns {number}
+   */
+  static bitsToBitmasks(numBits) {
+    return Math.ceil(numBits / BigBitmask.BITS_PER_BITMASK);
+  }
+
+  /**
+   * Returns the minimum amount of bytes needed to create a `BigBitmask` that can store `numBits`.
+   */
+  static bitsToSizeInBytes(numBits) {
+    return BigBitmask.bitsToBitmasks(numBits) * BigBitmask.BYTES_PER_BITMASK;
   }
 
   /**
@@ -56,7 +115,7 @@ export default class BigBitmask {
    * @returns {BigBitmask}
    */
   static AND(bb1, bb2) {
-    const result = new BigBitmask(bb1.bits.length * 32);
+    const result = new BigBitmask(bb1.bits.length * BigBitmask.BITS_PER_BITMASK);
 
     for (let i = 0; i < bb1.bits.length; i++)
       result.bits[i] = bb1.bits[i] & bb2.bits[i];
@@ -69,25 +128,31 @@ export default class BigBitmask {
    * @param {BigBitmask} source
    * @returns {BigBitmask}
    */
-  static createDeepCopy(source) {
-    const copy = new BigBitmask(0);
+  static createDeepCopy(source, buffer = undefined, byteOffset = undefined) {
+    const copy = new BigBitmask(source.bits.length * BigBitmask.BITS_PER_BITMASK, buffer, byteOffset);
     copy.bits = source.bits.slice(); // though Array.slice() makes a shallow copy, since we're copying primitive values (Uint32s) it doesn't matter
     return copy;
   }
 
   /**
    * Sets the bit at `index` to 1.
-   * 
-   * Note that the modified result is returned, allowing this function to be chained after a constructor call,
-   * e.g. `const b = new BigBitmask(100).setBit(50);`
-   * 
    * @param {number} index
    * @returns {this}
    */
   setBit(index) {
-    const arrayIndex = Math.floor(index / 32);
+    const arrayIndex = Math.floor(index / BigBitmask.BITS_PER_BITMASK);
     this.bits[arrayIndex] |= BigBitmask.indexToBitmask(index);
     return this;
+  }
+
+  /**
+   * Sets all bits to 1.
+   * @returns {this}
+   */
+  fill() {
+    // TODO: make this function
+    // You will need to use this.numBits and likely also the max value of a 32 bit unsigned int (2^32 - 1)
+    throw new Error("Method not implemented yet.")
   }
 
   /**
@@ -144,7 +209,7 @@ export default class BigBitmask {
 
     for (let i = 0; i < this.bits.length; i++) {
       let bitmask = this.bits[i]; // make a copy so we don't alter the actual value
-      const base = i * 32;
+      const base = i * BigBitmask.BITS_PER_BITMASK;
 
       while (bitmask !== 0) {
         const lowestSetBit_Signed = bitmask & -bitmask;

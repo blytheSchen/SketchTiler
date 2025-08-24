@@ -5,8 +5,7 @@
  */
 export default class Queue {
   list = [];
-  
-  get length() { return this.list.length; }
+  get count() { return this.list.length; }
 
   /**
    * Adds `element` to the back of the queue.
