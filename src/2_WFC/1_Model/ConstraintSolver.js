@@ -28,18 +28,19 @@ export default class ConstraintSolver {
   performanceProfiler = new PerformanceProfiler();
 
   /**
-   * Attempts to solve `this.waveMatrix` based on learned pattern data.
+   * Attempts to solve this.waveMatrix based on learned pattern data.
    * @param {number[]} weights The number of occurrances of every pattern.
    * @param {AdjacentPatternsMap[]} adjacencies The adjacent patterns in each direction of every pattern.
    * @param {SetTileInstruction[]} setTileInstructions Stores which `Cell`s have a limited choice in the possible patterns they can be and what those possible patterns are.
    * @param {number} width The width to set `this.waveMatrix` to.
    * @param {number} height The height to set `this.waveMatrix` to.
    * @param {number} maxAttempts The max amount of tries to solve `this.waveMatrix`.
-   * @param {bool} logProgress Whether to log the progress of this function in the console.
-   * @param {bool} profilePerformance Whether to profile the performance of this function and display it in the console.
-   * @returns {bool} Whether the attempt was successful.
+   * @param {bool} logProgress logProgress Whether to log the progress of this function in the console.
+   * @param {bool} profilePerformance Whether to profile the performance of this function or not.
+   * @param {bool} logProfile Whether to log the performance profile of this function or not.
+   * @returns {bool} Whether the attempt was successful or not.
    */
-  solve(weights, adjacencies, setTileInstructions, width, height, maxAttempts, logProgress, profilePerformance) {
+  solve(weights, adjacencies, setTileInstructions, width, height, maxAttempts, logProgress, profilePerformance, logProfile) {
     this.performanceProfiler.clearData();
     this.profileFunctions(profilePerformance);
 

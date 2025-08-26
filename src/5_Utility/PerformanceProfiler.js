@@ -70,6 +70,20 @@ export default class PerformanceProfiler {
 		console.log(message);
 	}
 
+	/** Returns *total durations* of all functions profiled. */
+	returnData() {
+		let obj = {};
+		let combinedTotalExecutionTime = 0;
+
+		for (const [funcName, funcData] of this.data) {
+			obj[`${funcName}`] = funcData.totalExecutionTime;
+			if (!funcData.isInnerFunctionCall) combinedTotalExecutionTime += funcData.totalExecutionTime;
+		}
+		obj["total"] = combinedTotalExecutionTime;
+
+		return obj;
+	}
+
 	/** Clears all tracked performance data. */
 	clearData() {
 		this.data.clear();
