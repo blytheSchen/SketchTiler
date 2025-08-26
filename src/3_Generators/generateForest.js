@@ -32,7 +32,6 @@ export default function generateForest(boundingBox) {
   }
 
   // trim void border
-  console.log(boundingBox, forest)
   forest.pop();     // removes bottom border
   forest.shift();   // removes top border
   for(let row of forest){
