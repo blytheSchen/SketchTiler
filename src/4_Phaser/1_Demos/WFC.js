@@ -352,7 +352,7 @@ export default class WFC extends Phaser.Scene {
         ],
       },
       fence: {
-        regionType: "trace",
+        regionType: "box",
         color: 3,
         tileIDs: [
           45, 46, 47, 48, 
@@ -380,16 +380,29 @@ export default class WFC extends Phaser.Scene {
       }
     };
 
-    let layout = new Layout(
-      {layers: this.multiLayerMapLayers}, 
-      MIN_STRUCTURE_SIZE, 
-      STRUCTURE_TYPES
-    );
+    // init layouts array with default input image
+    let layouts = [
+      new Layout(
+        {layers: this.multiLayerMapLayers}, 
+        MIN_STRUCTURE_SIZE, 
+        STRUCTURE_TYPES
+      ).getLayoutMap(),
+    ];
 
-    this.makeMetaTileLayer(layout.getLayoutMap(), "colorTiles");
+    this.makeMetaTileLayer(layouts[0], "colorTiles"); // display color blocked default input image 
 
-    console.log(layout.getLayoutMap())
-    this.metaModel = new WFCModel().learn([layout.getLayoutMap()], this.N, this.profileLearning, this.printPatterns);
+    // add more inputs
+    for(let structureMap of IMAGES.STRUCTURES){
+      layouts.push(
+        new Layout(
+          structureMap,
+          MIN_STRUCTURE_SIZE, 
+          STRUCTURE_TYPES
+        ).getLayoutMap()
+      )
+    }
+
+    this.metaModel = new WFCModel().learn(layouts, this.N, this.profileLearning, this.printPatterns);
 
     this.overlayToggle.disabled = false;
   }
