@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SketchTiler</title>
-    <link rel="stylesheet" href="/index.css">
+    <link rel="stylesheet" href="/src/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
   </head>
   <body>
@@ -43,6 +43,10 @@
             padding: 10px;
           "></div>
         </div>
+        <div id="export-buttons">
+          <button id="export-map-button" class="button is-dark" disabled="true">Export map</button>
+          <button id="export-sketch-button" class="button is-dark" disabled="true">Export sketch</button>
+        </div>
       </div>
       <div id="instructions" class="content">
         <h2 class="title is-2">SketchTiler - the sketch to tilemap application</h2>
@@ -64,7 +68,6 @@
         </ul>
       </div>
     </div>
-    <script type="module" src="/index.js"></script>
-    <script type="module" src="/src/1_Sketchpad/sketchpad.js"></script>
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>

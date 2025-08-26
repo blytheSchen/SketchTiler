@@ -1,0 +1,5 @@
+package.json and package-lock.json exist so ESLint can work when installed locally
+Using ESLint is optional, but if you want to use it:
+ - install Node.js and make sure you also get npm (it comes with Node by default)
+ - while in the root folder for this project in the terminal, run "npm install"
+ - install the ESLint VS Code extension

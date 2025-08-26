@@ -1,0 +1,2 @@
+Some optimization ideas that I had but didn't have enough time to implement.
+ -Justin

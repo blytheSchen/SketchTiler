@@ -1,6 +1,6 @@
 {
+	"include": ["**/*.js", "**/*.d.ts"],
 	"compilerOptions": {
 		"lib": ["ESNext", "DOM"]
-	},
-	"include": ["./**/*.js"]
+	}
 }

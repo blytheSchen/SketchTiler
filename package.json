@@ -1,0 +1,31 @@
+{
+  "name": "sketchtiler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rxlling-Pxly/SketchTiler.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Rxlling-Pxly/SketchTiler/issues"
+  },
+  "homepage": "https://github.com/Rxlling-Pxly/SketchTiler#readme",
+  "devDependencies": {
+    "@eslint/css": "^0.10.0",
+    "@eslint/js": "^9.33.0",
+    "@eslint/json": "^0.13.1",
+    "@eslint/markdown": "^7.1.0",
+    "eslint": "^9.33.0",
+    "globals": "^16.3.0"
+  }
+}

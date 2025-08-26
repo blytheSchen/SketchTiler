@@ -65,8 +65,8 @@ export default class HouseDataMiner extends Phaser.Scene {
       for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         const layer = this.layers[i];
-        const tileID = layer.layer.data[y][x].index;
-        this.matrices[i][y][x] = tileID;
+        const tileId = layer.layer.data[y][x].index;
+        this.matrices[i][y][x] = tileId;
       }}
     }
   }

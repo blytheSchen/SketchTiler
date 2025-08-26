@@ -1,11 +1,11 @@
 import Phaser from "../../lib/phaserModule.js";
-import WFCModel from "../2_WFC/1_Model/wfcModel.js";
-import IMAGES from "../2_WFC/2_Input/images.js";
-import TILEMAP from "./tilemap.js";
-import getBoundingBox from "../3_Generators/getBoundingBox.js";
+import TILEMAP from "./TILEMAP.js";
+import WFCModel from "../2_WFC/1_Model/WFCModel.js";
+import IMAGES from "../2_WFC/2_Input/IMAGES.js";
 import generateHouse from "../3_Generators/generateHouse.js";
 import generateForest from "../3_Generators/generateForest.js";
 import { Regions } from "../1_Sketchpad/1_Classes/regions.js";
+import { exportSketch } from "../1_Sketchpad/sketchpad.js";
 
 const SUGGESTED_TILE_ALPHA = 0.5;  // must be between 0 and 1
 
@@ -21,8 +21,7 @@ export default class Autotiler extends Phaser.Scene {
   }
 
   create() {
-    const cellSize = 16;
-    this.multiLayerMap = this.add.tilemap("tinyTownMap", cellSize, cellSize, 40, 25);
+    this.multiLayerMap = this.add.tilemap("tinyTownMap", TILEMAP.TILE_WIDTH, TILEMAP.TILE_WIDTH, 40, 25);
     this.tileset = this.multiLayerMap.addTilesetImage("kenney-tiny-town", "tilemap");
 
     this.groundModel = new WFCModel().learn(IMAGES.GROUND, 2);
@@ -35,10 +34,15 @@ export default class Autotiler extends Phaser.Scene {
       Forest: (region) => generateForest({width: region.width, height: region.height})
     };
 
+    // exports
+    this.exportMapButton = document.getElementById("export-map-button");
+    this.exportMapButton.addEventListener("click", async () => this.export("map"));
+    this.exportMapButton.disabled = true;
+
     window.addEventListener("generate", (e) => {
       this.sketch = e.detail.sketch;
       this.structures = e.detail.structures;
-      this.regions = new Regions(this.sketch, this.structures, cellSize).get();
+      this.regions = new Regions(this.sketch, this.structures, TILEMAP.TILE_WIDTH).get();
 
       const sketchImage = Array.from({ length: TILEMAP.HEIGHT }, () => Array(TILEMAP.WIDTH).fill(0));  // 2D array of all 0s
       
@@ -51,13 +55,14 @@ export default class Autotiler extends Phaser.Scene {
       this.createStructsMap_Sketch(sketchImage);
 
       console.log("Generation Complete");
+      this.exportMapButton.disabled = false;
     });
 
     window.addEventListener("clearSketch", (e) => {
-      const sketchImage = Array.from({ length: TILEMAP.HEIGHT }, () => Array(TILEMAP.WIDTH).fill(0));  // 2D array of all 0s
-      
+      //const sketchImage = Array.from({ length: TILEMAP.HEIGHT }, () => Array(TILEMAP.WIDTH).fill(0));  // 2D array of all 0s
       console.log("Clearing sketch data");
       this.structsModel.clearSetTiles();
+      // this.exportMapButton.disabled = true;
     });
 
     window.addEventListener("undoSketch", (e) => {
@@ -97,16 +102,18 @@ export default class Autotiler extends Phaser.Scene {
   }
 
   createGroundMap() {
-      const image = this.groundModel.generate(TILEMAP.WIDTH, TILEMAP.HEIGHT, 10, false, false);
-      if (!image) throw new Error("Contradiction created");
-      
-      if (this.groundMap) this.groundMap.destroy();
-      this.groundMap = this.make.tilemap({
-        data: image,
-        tileWidth: TILEMAP.TILE_WIDTH,
-        tileHeight: TILEMAP.TILE_WIDTH
-      });
-      this.groundMap.createLayer(0, this.tileset, 0, 0);
+    const image = this.groundModel.generate(TILEMAP.WIDTH, TILEMAP.HEIGHT, 10, false, false);
+    if (!image) throw new Error("Contradiction created");
+    
+    if (this.groundMap) this.groundMap.destroy();
+    this.groundMap = this.make.tilemap({
+      data: image,
+      tileWidth: TILEMAP.TILE_WIDTH,
+      tileHeight: TILEMAP.TILE_WIDTH
+    });
+    this.groundMap.createLayer(0, this.tileset, 0, 0);
+
+    this.groundImage = image;   // for exports
   }
 
   createStructsMap_WFC() {
@@ -119,7 +126,10 @@ export default class Autotiler extends Phaser.Scene {
       tileWidth: TILEMAP.TILE_WIDTH,
       tileHeight: TILEMAP.TILE_WIDTH
     });
-    this.structsMap_WFC.createLayer(0, this.tileset, 0, 0).setAlpha(SUGGESTED_TILE_ALPHA);
+    this.suggestionsLayer = this.structsMap_WFC.createLayer(0, this.tileset, 0, 0);
+    this.suggestionsLayer.setAlpha(SUGGESTED_TILE_ALPHA);
+
+    this.exportImage = image; // for exports
   }
 
   createStructsMap_Sketch(data) {
@@ -131,4 +141,55 @@ export default class Autotiler extends Phaser.Scene {
     });
     this.structsMap_Sketch.createLayer(0, this.tileset, 0, 0);
   }
+
+  async exportMap(zip){
+    // add map data to the zip
+    zip.file("tilemapData.json", JSON.stringify({
+      ground: this.convertToSignedArray(this.groundImage),
+      structures: this.convertToSignedArray(this.exportImage)
+    }));
+
+    // make suggestions full opacity
+    this.suggestionsLayer.setAlpha(1);
+
+    // slight pause so canvas snapshot (below) reflects full opacity suggestions
+    await new Promise(resolve => setTimeout(resolve, 10)); 
+
+    // add map image to the zip
+    const canvas = window.game.canvas;
+    const dataURL = canvas.toDataURL("image/PNG")
+    const base64Data = dataURL.replace(/^data:image\/(png|jpg);base64,/, "");
+
+    zip.file("tilemapImage.png", base64Data, { base64: true });
+
+    this.exportMapButton.disabled = true;
+  }
+
+  async export(key){
+    const zip = JSZip();
+
+    switch(key){
+      case "map":
+        await this.exportMap(zip);
+        break;
+      case "all":
+        await this.exportMap(zip);
+        await exportSketch(zip);
+        break;
+    }
+    
+    // generate zip
+    const blob = await zip.generateAsync({ type: "blob" });
+    saveAs(blob, `sketchtiler_export_${key}.zip`);
+  }
+
+  // converts unsigned ints back to signed 
+  convertToSignedArray(arr){
+    let signed2D = arr.map(row =>
+      row.map(v => v | 0)   // force into signed 32-bit space
+    );
+
+    return signed2D;
+  }
+  
 }

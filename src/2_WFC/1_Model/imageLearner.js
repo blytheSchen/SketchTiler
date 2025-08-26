@@ -1,155 +1,165 @@
-import DIRECTIONS from "./DIRECTIONS.js";
-import Bitmask from "./Bitmask.js";
 import PerformanceProfiler from "../../5_Utility/PerformanceProfiler.js";
+import BigBitmask from "./BigBitmask.js";
+import DIRECTIONS from "./DIRECTIONS.js";
 
+/** A component of the WFCModel that's responsible for gathering all data
+ *  necessary for solving a wave matrix and generating an image from it. */
 export default class ImageLearner {
-  /**
-   * Stores the tiles of every pattern, where element i is the tiles of pattern i.
-   * @type {Pattern[]}
-   */
+  /** Stores the tiles of every pattern.
+   *  @example patterns[3] -> [ [1, 2], [3, 4] ]
+   *  @type {Pattern[]} */
   patterns;
 
-  /**
-   * Stores the weight of every pattern, where element i is the weight of pattern i.
-   * @type {number[]}
-   */
+  /** Stores the number of occurrances of every pattern in the learned image(s).
+   *  @type {number[]} */
   weights;
 
-  /**
-   * Stores the adjacencies of every pattern, where element i is the adjacencies of pattern i.
-   * @type {AdjacentPatternsMap[]}
-   */
+  /** Stores the adjacent patterns in each direction of every pattern.
+   *  @type {AdjacentPatternsMap[]} */
   adjacencies;
 
-  /**
-   * For each tile, stores which patterns contain that tile as its top left tile.
-   * @type {Map<number, TilePatternsBitmask>}
-   */
+  /** For each tile, stores which patterns contain that tile as its top left tile.
+   *  @type {Map<number, TilePatternsBitmask>} */
   tilesToPatterns;
 
   performanceProfiler = new PerformanceProfiler();
 
   /**
    * Learns the patterns of one or more images. Doesn't process images as periodic, and doesn't rotate or reflect patterns.
-   * @param {TilemapImage[]} images The images to learn. If you only want to learn one pass an array with a single image in it.
-   * @param {number} N The width and height of the patterns.
-   * @param {bool} profile Whether to profile the performance of this function or not.
+   * @param {TilemapImage[]} images The images to learn.
+   * @param {number} N The width and height of the patterns (in tiles).
+   * @param {bool} profilePerformance Whether to profile the performance of this function and display it in the console.
+   * @param {bool} printPatterns Whether to return the array of parsed patterns.
    */
-  learn(images, N, profile, printPatterns = false) {
+  learn(images, N, profilePerformance, printPatterns = false) {
     this.patterns = [];
     this.weights = [];
     this.adjacencies = [];
     this.tilesToPatterns = new Map();
 
     this.performanceProfiler.clearData();
-    this.profileFunctions(profile)
+    this.profileFunctions(profilePerformance)
 
-    this.getPatternsAndWeights(images, N);
-    this.getAdjacencies();
-    this.getTilesToPatterns();
+    this.learnPatternsAndWeights(images, N);
+    this.learnAdjacencies();
+    this.populateTilesToPatterns();
 
-    if (profile) this.performanceProfiler.logData();
+    if (profilePerformance) this.performanceProfiler.logData();
     if(printPatterns){
       return this.patterns;
     }
   }
 
   /**
-   * Registers/unregisters important member functions to the performance profiler.
-   * @param {bool} value Whether to profile (register) or not (unregister).
+   * Registers/unregisters important methods to `this.performanceProfiler`.
+   * @param {bool} value Whether to register (true) or unregister (false).
+   * @returns {void}
    */
   profileFunctions(value) {
     if (value) {
-      this.getPatternsAndWeights = this.performanceProfiler.register(this.getPatternsAndWeights, false);
-      this.getPattern = this.performanceProfiler.register(this.getPattern, true);
-      this.getAdjacencies = this.performanceProfiler.register(this.getAdjacencies, false);
-      this.isAdjacent = this.performanceProfiler.register(this.isAdjacent, true);
-      this.getTilesToPatterns = this.performanceProfiler.register(this.getTilesToPatterns, false);
+      this.getPatternsAndWeights = this.performanceProfiler.register(this.learnPatternsAndWeights, false);
+      this.getPattern = this.performanceProfiler.register(this.learnPattern, true);
+      this.getAdjacencies = this.performanceProfiler.register(this.learnAdjacencies, false);
+      this.isAdjacent = this.performanceProfiler.register(this.isToTheDirectionOf, true);
+      this.getTilesToPatterns = this.performanceProfiler.register(this.populateTilesToPatterns, false);
     } else {
-      this.getPatternsAndWeights = this.performanceProfiler.unregister(this.getPatternsAndWeights);
-      this.getPattern = this.performanceProfiler.unregister(this.getPattern);
-      this.getAdjacencies = this.performanceProfiler.unregister(this.getAdjacencies);
-      this.isAdjacent = this.performanceProfiler.unregister(this.isAdjacent);
-      this.getTilesToPatterns = this.performanceProfiler.unregister(this.getTilesToPatterns);
+      this.getPatternsAndWeights = this.performanceProfiler.unregister(this.learnPatternsAndWeights);
+      this.getPattern = this.performanceProfiler.unregister(this.learnPattern);
+      this.getAdjacencies = this.performanceProfiler.unregister(this.learnAdjacencies);
+      this.isAdjacent = this.performanceProfiler.unregister(this.isToTheDirectionOf);
+      this.getTilesToPatterns = this.performanceProfiler.unregister(this.populateTilesToPatterns);
     }
   }
 
   /**
-   * Populates this.patterns and this.weights.
-   * @param {TilemapImage[]} images an array of 2D tile ID matrices that each represent a layer of a tilemap
-   * @param {number} N the width and height of the learned patterns
+   * Populates `this.patterns` and `this.weights`.
+   * @param {TilemapImage[]} images The images to learn the patterns and their weights from.
+   * @param {number} N The width and height of the patterns (in tiles).
+   * @returns {void}
    */
-  getPatternsAndWeights(images, N) {
+  learnPatternsAndWeights(images, N) {
     /*
-      Because patterns[] must only contain unique ones, we have to get patterns and weights together
-      When we find duplicate patterns, throw them out and increment the original pattern's weight
-      Use a map to filter out duplicates and know the index of the element in weights[] to increment
+      We need to get patterns and weights at the same time because `this.patterns` must only contain unique patterns.
+      When we find duplicate patterns, throw them out and increment the original pattern's weight.
+      Use a map to filter out duplicates while still remembering the index of `this.weights` to increment.
     */
 
-    const uniquePatterns = new Map();	// <pattern, index>
+    /** @type {Map<string, number>} <patternAsString: string, patternIndex: number> */
+    const uniquePatterns = new Map();
 
     for (const image of images) {
-      for (let y = 0; y < image.length-N+1; y++) {	// length-N+1 because we're not processing image as periodic
-      for (let x = 0; x < image[0].length-N+1; x++) {	// length-N+1 because we're not processing image as periodic
 
-        const p = this.getPattern(image, N, y, x);
-        const p_str = p.toString();	// need to convert to string because maps compare arrays using their pointers
-        if (uniquePatterns.has(p_str)) {
-          const i = uniquePatterns.get(p_str);
-          this.weights[i]++;
+      for (let y = 0; y < image.length-N+1; y++) {    // `length-N+1` because we're not processing image as periodic
+      for (let x = 0; x < image[0].length-N+1; x++) { // `length-N+1` because we're not processing image as periodic
+        const pattern = this.learnPattern(image, N, y, x);
+        const patternAsString = pattern.toString();	// convert to string because `Map` compares arrays using their pointers
+
+        if (uniquePatterns.has(patternAsString)) {
+          const index = uniquePatterns.get(patternAsString);
+          this.weights[index]++;
         } else {
-          this.patterns.push(p);
+          this.patterns.push(pattern);
           this.weights.push(1);
-          uniquePatterns.set(p_str, this.patterns.length-1);
+
+          const patternIndex = this.patterns.length-1;
+          uniquePatterns.set(patternAsString, patternIndex);
         }
       }}
     }
   }
 
   /**
-   * @param {TilemapImage} image an array of 2D tile ID matrices that each represent a layer of a tilemap
-   * @param {number} N the width and height of the learned patterns
-   * @param {number} y the y position of the window that captures the pattern
-   * @param {number} x the x position of the window that captures the pattern
+   * @param {TilemapImage} image The image to learn the pattern from.
+   * @param {number} N The width and height of the pattern (in tiles).
+   * @param {number} globalY The y position of the pattern's upper left tile.
+   * @param {number} globalX the x position of the pattern's upper left tile.
    * @returns {Pattern}
    */
-  getPattern(image, N, y, x) {
+  learnPattern(image, N, globalY, globalX) {
     const pattern = [];
-    for (let ny = 0; ny < N; ny++) pattern[ny] = [];
+    for (let relativeY = 0; relativeY < N; relativeY++) pattern[relativeY] = new Uint32Array(N);
 
-    for (let ny = 0; ny < N; ny++) {
-    for (let nx = 0; nx < N; nx++) {
-      pattern[ny][nx] = image[y+ny][x+nx];
+    for (let relativeY = 0; relativeY < N; relativeY++) {
+    for (let relativeX = 0; relativeX < N; relativeX++) {
+      pattern[relativeY][relativeX] = image[globalY+relativeY][globalX+relativeX];
     }}
 
     return pattern;
   }
 
-  /** Populates this.adjacencies. */
-  getAdjacencies() {
+  /**
+   * Populates `this.adjacencies`.
+   * @returns {void}
+   */
+  learnAdjacencies() {
     /*
-      Check each pattern against every other pattern, including itself, in every direction
-      Because pattern adjacency is commutative (A is adjacent to B means B is adjacent to A)
-      We don't need to check combos that we've already done
-      Hence why j starts at i
+      Check each pattern against every pattern (including itself) in every direction.
+      Pattern adjacency is commutative (A is adjacent to B means B is adjacent to A).
+      So we don't need to check combos that we've already done, hence why j starts at i.
     */
 
     for (let i = 0; i < this.patterns.length; i++) {
       this.adjacencies.push([
-        new Bitmask(this.patterns.length),	// up
-        new Bitmask(this.patterns.length),	// down
-        new Bitmask(this.patterns.length),	// left
-        new Bitmask(this.patterns.length)	// right
+        new BigBitmask(this.patterns.length),	// up
+        new BigBitmask(this.patterns.length),	// down
+        new BigBitmask(this.patterns.length),	// left
+        new BigBitmask(this.patterns.length),	// right
       ]);
     }		
 
-    const oppositeDirIndex = new Map([[0, 1], [1, 0], [2, 3], [3, 2]]);	// input direction index k to get opposite direction index o
+    /** Input the index of direction k to get the index of opposite direction o. */
+    const oppositeDirectionIndex = new Map([
+      [0, 1], // up     (index 0) ->  down  (index 1)
+      [1, 0], // down   (index 1) ->  up    (index 0)
+      [2, 3], // left   (index 2) ->  right (index 3)
+      [3, 2], // right  (index 3) ->  left  (index 2)
+    ]);
 
     for (let i = 0; i < this.patterns.length; i++) {
       for (let j = i; j < this.patterns.length; j++) {
         for (let k = 0; k < DIRECTIONS.length; k++) {
-          if (this.isAdjacent(this.patterns[i], this.patterns[j], DIRECTIONS[k])) {
-            const o = oppositeDirIndex.get(k);
+          if (this.isToTheDirectionOf(this.patterns[i], DIRECTIONS[k], this.patterns[j])) {
+            const o = oppositeDirectionIndex.get(k);
             this.adjacencies[i][k].setBit(j);
             this.adjacencies[j][o].setBit(i);
           }
@@ -159,50 +169,64 @@ export default class ImageLearner {
   }
 
   /**
-   * Determines if p1 is to the {dir} of p2. This result also tells you whether p2 is to the {opposite dir} of p1.
-   * @param {Pattern} p1
-   * @param {Pattern} p2
-   * @param {Direction} dir
+   * Returns whether `pattern1` is to the `direction` of `pattern2`.
+   * This also tells you whether `pattern2` is to the opposite direction of `pattern1`.
+   * @param {Pattern} pattern1
+   * @param {Direction} direction
+   * @param {Pattern} pattern2
    * @returns {boolean}
    */
-  isAdjacent(p1, p2, dir) {
+  isToTheDirectionOf(pattern1, direction, pattern2) {
     /*
       Check if the patterns overlap, for example:
-      Suppose dir is UP ([-1, 0])
+      Suppose `direction` is UP ([-1, 0])
 
-        p1
-      X	X	X			p2
+      pattern1
+      X	X	X		pattern2
       1	2	3		1	2	3
       4	5	6		4	5	6
               X	X	X
 
-      If every number in p1 matches with its corresponding number in p2, then p1 is to the top of p2
+      If every number in pattern1 matches with its corresponding number in pattern2,
+      e.g. the value at '1' in `pattern1` is the same as the value at '1' in `pattern2` and so on,
+      then pattern1 is to the 'up' of pattern2
     */
+
+    const dy = direction[0];
+    const dx = direction[1];
 
     const start = new Map([[-1, 1], [1, 0], [0, 0]]);
     const end = new Map([[-1, 0], [1, -1], [0, 0]]);
-    const dy = dir[0];
-    const dx = dir[1];
     const startY = start.get(dy);
     const startX = start.get(dx);
-    const endY = p1.length + end.get(dy);
-    const endX = p1[0].length + end.get(dx);
+
+    const endY = pattern1.length + end.get(dy);
+    const endX = pattern1[0].length + end.get(dx);
 
     for (let y = startY; y < endY; y++) {
     for (let x = startX; x < endX; x++) {
-      const tile1ID = p1[y][x];
-      const tile2ID = p2[y+dy][x+dx];
-      if (tile1ID !== tile2ID) return false;
+      const tile1Id = pattern1[y][x];
+      const tile2Id = pattern2[y+dy][x+dx];
+      if (tile1Id !== tile2Id) return false;
     }}
     return true;
   }
 
-  /** Populates this.tilesToPatterns. */
-  getTilesToPatterns() {
+  /**
+   * Populates `this.tilesToPatterns`.
+   * @returns {void}
+   */
+  populateTilesToPatterns() {
     for (let i = 0; i < this.patterns.length; i++) {
-      const tileID = this.patterns[i][0][0];
-      if (this.tilesToPatterns.has(tileID)) this.tilesToPatterns.get(tileID).setBit(i);
-      else this.tilesToPatterns.set(tileID, new Bitmask(this.patterns.length).setBit(i));
+      const topLeftTileId = this.patterns[i][0][0];
+
+      if (this.tilesToPatterns.has(topLeftTileId)) {
+        const tilePatternsBitmask = this.tilesToPatterns.get(topLeftTileId);
+        tilePatternsBitmask.setBit(i);
+      } else {
+        const tilePatternsBitmask = new BigBitmask(this.patterns.length).setBit(i);
+        this.tilesToPatterns.set(topLeftTileId, tilePatternsBitmask);
+      }
     }
   }
 }
