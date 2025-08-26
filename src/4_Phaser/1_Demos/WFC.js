@@ -92,7 +92,6 @@ export default class WFC extends Phaser.Scene {
       <div class="buttons mt-3">
         <button id="generateBtn" class="button is-primary">Generate</button>
         <button id="clearBtn" class="button is-warning">Clear</button>
-        <button id="colorBlockingBtn" class="button is-outline-info">Color block</button>
         <span id="overlay">
           <input id="overlay-toggle"
             type="checkbox" 
@@ -137,8 +136,6 @@ export default class WFC extends Phaser.Scene {
     document.getElementById("clearBtn").addEventListener("click", () => this.clearMap());
     
     /* COLOR BLOCK */
-    this.colorBlockButton = document.getElementById("colorBlockingBtn")
-    this.colorBlockButton.addEventListener("click", () => this.colorBlock())
     this.overlayToggle = document.getElementById('overlay-toggle');
     this.overlayToggle.addEventListener("click", () => {
       if(this.colorblockGFX) this.colorblockGFX.setVisible(this.overlayToggle.checked);
@@ -395,7 +392,6 @@ export default class WFC extends Phaser.Scene {
     this.metaModel = new WFCModel().learn([layout.getLayoutMap()], this.N, this.profileLearning, this.printPatterns);
 
     this.overlayToggle.disabled = false;
-    this.colorBlockButton.disabled = true;
   }
 
   // TEMP: just copied the logic here from Demo_Sketch.js for now
