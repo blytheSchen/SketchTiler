@@ -2,6 +2,7 @@ import Phaser from "../../../lib/phaserModule.js";
 import WFCModel from "../../2_WFC/1_Model/WFCModel.js";
 import IMAGES from "../../2_WFC/2_Input/IMAGES.js";
 import generateHouse from "../../3_Generators/generateHouse.js";
+import generateForest from "../../3_Generators/generateForest.js";
 
 // hide sketchpad elements
 document.getElementById("sketchpad").classList.add("hidden");
@@ -137,13 +138,13 @@ export default class WFC extends Phaser.Scene {
   generateMap(profile = false){
     console.log("Using model for ground");
     const groundImage = this.groundModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
-    if (!groundImage) return;
-
-    console.log("Using model for structures");
-    const structuresImage = this.structuresModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
-    if (!structuresImage) return;
+    if (!groundImage) return false;
     
     /*
+    console.log("Using model for structures");
+    const structuresImage = this.structuresModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
+    if (!structuresImage) return false;
+    
     console.log("Using house generator");
     const structuresImage = generateHouse({
       topLeft: { x: 0, y: 0 },
@@ -151,8 +152,17 @@ export default class WFC extends Phaser.Scene {
       width: this.width,
       height: this.height
     });
-    if (!structuresImage) return;
+    if (!structuresImage) return false;
     */
+
+    console.log("Using forest generator");
+    const structuresImage = generateForest({
+      topLeft: { x: 0, y: 0 },
+      bottomRight: { x: this.width-1, y: this.height-1 },
+      width: this.width,
+      height: this.height
+    });
+    if (!structuresImage) return false;
 
     this.displayMap(groundImage, structuresImage);
     document.getElementById("thinking-icon").style.display = "none";        // hide
@@ -163,7 +173,9 @@ export default class WFC extends Phaser.Scene {
         ground: this.groundModel.performanceProfile,
         structs: this.structuresModel.performanceProfile,
       }
-    }
+    } else {
+      return true
+    };
   }
 
   displayMap(groundImage, structuresImage) {
@@ -193,6 +205,11 @@ export default class WFC extends Phaser.Scene {
 
     for (let i = 0; i < numRuns; i++) {
       let profile = this.generateMap(true);
+      if(!profile){
+        // TODO: add contradictions counter here
+        i--;
+        continue;
+      }
       profiles.push(profile);
 
       // update progress bar

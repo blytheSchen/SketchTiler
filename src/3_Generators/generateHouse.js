@@ -19,7 +19,10 @@ export default function generateHouse(boundingBox) {
   setDoorRandomlyAtBottom(width, height);
 
   const house = model.generate(width, height, 10, false, false);
-  if (!house) throw new Error("Contradiction created");
+  if (!house){ 
+    console.error("Contradiction created");
+    return false;
+  }
   return house;
 }
 
