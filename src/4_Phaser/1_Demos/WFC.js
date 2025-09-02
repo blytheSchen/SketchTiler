@@ -182,7 +182,7 @@ export default class WFC extends Phaser.Scene {
 
     const bgImage  = Array.from({ length: this.height }, () => Array(this.width).fill(0));
 
-    this.displayMap(bgImage, metaImage, "colorTiles");
+    this.displayMap(bgImage, metaImage, "colorTiles", 0);
     document.getElementById("thinking-icon").style.display = "none"; // hide
 
     return metaImage;
@@ -208,7 +208,11 @@ export default class WFC extends Phaser.Scene {
 
       const tilemapImage = this.generateTilemap(wfcLayout);
 
+      // show tiled version
       this.displayMap(groundImage, tilemapImage, "tilemap");
+      // show color block version
+      //const bgImage  = Array.from({ length: this.height }, () => Array(this.width).fill(0));
+      //this.displayMap(bgImage, metaImage, "colorTiles", 0);
 
       return {
         metaTiles: this.metaModel.performanceProfile,
@@ -242,8 +246,8 @@ export default class WFC extends Phaser.Scene {
 
     return tilemapImage;
   }
-
-  displayMap(groundImage, structuresImage, tilesetName) {
+  
+  displayMap(groundImage, structuresImage, tilesetName, gid = 1) {
     if (this.groundMap) this.groundMap.destroy();
     if (this.structuresMap) this.structuresMap.destroy();
 
@@ -259,7 +263,7 @@ export default class WFC extends Phaser.Scene {
       tileHeight: this.tileSize
     });
 
-    let tileset = this.structuresMap.addTilesetImage("tileset", tilesetName, 16, 16, 0, 0, 1);
+    let tileset = this.structuresMap.addTilesetImage("tileset", tilesetName, 16, 16, 0, 0, gid);
     
     this.groundMap.createLayer(0, tileset, 0, 0, 1);
     this.structuresMap.createLayer(0, tileset, 0, 0, 1);
