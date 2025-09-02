@@ -308,6 +308,11 @@ export default class WFC extends Phaser.Scene {
 
     for (let i = 0; i < numRuns; i++) {
       let profile = this.generateMap(true);
+      if(!profile){
+        // TODO: add contradictions counter here
+        i--;
+        continue;
+      }
       profiles.push(profile);
 
       // update progress bar
