@@ -3,6 +3,7 @@ import WFCModel from "../../2_WFC/1_Model/WFCModel.js";
 import IMAGES from "../../2_WFC/2_Input/IMAGES.js";
 import generateHouse from "../../3_Generators/generateHouse.js";
 import Layout from "../../5_Utility/getWorldLayout.js";
+import STRUCTURE_TILES from "../structureTiles.js";
 
 // hide sketchpad elements
 document.getElementById("sketchpad").classList.add("hidden");
@@ -25,6 +26,7 @@ export default class WFC extends Phaser.Scene {
   logProgress = true;
   profileSolving = true;
   logProfile = false;
+  minStructreSize = 2;
 
   numRuns = 100;	// for this.getAverageGenerationDuration()
   printAveragePerformance = true;
@@ -48,7 +50,7 @@ export default class WFC extends Phaser.Scene {
     this.showInputImage();
     this.setupControls();
 
-    this.colorBlock();
+    this.colorBlock("tiny_town");
 
     if(this.printPatterns) this.displayPatterns(this.metaModel.patterns, "colorTiles");
   }
@@ -173,13 +175,25 @@ export default class WFC extends Phaser.Scene {
 
     this.displayMap(bgImage, metaImage, "colorTiles");
     document.getElementById("thinking-icon").style.display = "none"; // hide
+
+    return metaImage;
   }
 
   generateMap(profile = false){
-    this.generateMetaMap(profile);
+    let metaImage = this.generateMetaMap(profile);
 
     // return performance profiles for models used
     if(profile){
+      let wfcLayout = new Layout(
+        metaImage,
+        this.minStructreSize, 
+        STRUCTURE_TILES["color_blocks"]
+      )
+
+      for(let fact of wfcLayout.worldFacts){
+        console.log(fact);
+      }
+
       return {
         metaTiles: this.metaModel.performanceProfile,
       }
@@ -338,66 +352,33 @@ export default class WFC extends Phaser.Scene {
     if (this.structuresMap) this.structuresMap.destroy();
   }
 
-  colorBlock(){
-    const MIN_STRUCTURE_SIZE = 3;
-    const STRUCTURE_TYPES = {
-      house: {
-        regionType: "box",
-        color: 1,
-        tileIDs: [
-          49, 50, 51, 52, 53, 54, 55, 56,
-          61, 62, 63, 64, 65, 66, 67, 68,
-          73, 74, 75, 76, 77, 78, 79, 80,
-          85, 86, 87, 88, 89, 90, 91, 92
-        ],
-      },
-      fence: {
-        regionType: "box",
-        color: 3,
-        tileIDs: [
-          45, 46, 47, 48, 
-          57, 59, 60, 
-          69, 70, 71, 72, 
-          81, 82, 83
-        ]
-      },
-      forest: {
-        regionType: "box",
-        color: 2,
-        tileIDs: [
-          4, 5, 7, 8, 9, 10, 11, 12,
-          16, 17, 18, 19, 20, 21, 22, 23, 24, 
-          28, 29, 30, 31, 32, 33, 34, 35, 36,
-          107, 95
-        ],
-      },
-      path: {
-        regionType: "trace",
-        color: 4,
-        tileIDs: [
-          26, 40, 41, 42, 43, 44
-        ],
-      }
-    };
-
+  colorBlock(id){
     // init layouts array with default input image
     let layouts = [
       new Layout(
         {layers: this.multiLayerMapLayers}, 
-        MIN_STRUCTURE_SIZE, 
-        STRUCTURE_TYPES
+        this.minStructreSize, 
+        STRUCTURE_TILES[id]
       ).getLayoutMap(),
     ];
 
-    this.makeMetaTileLayer(layouts[0], "colorTiles"); // display color blocked default input image 
+    let metaInputIndex = 0;
+    this.makeMetaTileLayer(layouts[metaInputIndex], "colorTiles"); // display color blocked default input image 
+
+    this.metaMapSwitch_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
+    this.metaMapSwitch_Key.on("down", () => {
+      metaInputIndex++;
+      if(metaInputIndex === layouts.length) metaInputIndex = 0;
+      this.makeMetaTileLayer(layouts[metaInputIndex], "colorTiles");
+    });
 
     // add more inputs
     for(let structureMap of IMAGES.STRUCTURES){
       layouts.push(
         new Layout(
           structureMap,
-          MIN_STRUCTURE_SIZE, 
-          STRUCTURE_TYPES
+          this.minStructreSize, 
+          STRUCTURE_TILES[id]
         ).getLayoutMap()
       )
     }
@@ -452,6 +433,8 @@ export default class WFC extends Phaser.Scene {
   }
 
   makeMetaTileLayer(layoutMap, tilesetName){
+    if(this.metaMap) this.metaMap.destroy();
+
     this.metaMap = this.make.tilemap({
       data: layoutMap,
       tileWidth: this.tileSize,

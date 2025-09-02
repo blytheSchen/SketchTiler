@@ -35,3 +35,7 @@
   position: relative;
   float: right;
 }
+
+#profileMessage {
+  white-space: pre-line;
+}

@@ -42,11 +42,27 @@ export default class Layout{
                     
                     for(let x = startX; x < w; x++){
                         for(let y = startY; y < h; y++){
-                            this.layoutMap[y][x] = structureConfig.color;
+                            let corner = this.isCorner(x, y, structureFacts.boundingBox);
+                            let border = this.isBorder(x, y, structureFacts.boundingBox);
+
+                            if(corner < 0 && border < 0) { 
+                                // color fill tiles
+                                this.layoutMap[y][x] = structureConfig.color;
+                                
+                            } else {
+                                // color border and corner tiles
+                                if(border != -1){    
+                                    this.layoutMap[y][x] = (structureConfig.borders) ? 
+                                        structureConfig.borders[border] : structureConfig.color;
+                                }
+                                if(corner != -1 ) {  
+                                    this.layoutMap[y][x] = (structureConfig.corners) ? 
+                                        structureConfig.corners[corner] : structureConfig.color;
+                                }
+                            }
                         }
                     }
                 }
-
             }   
         }
     }
@@ -111,8 +127,11 @@ export default class Layout{
                 const structure = this.floodFill(x, y, visitedTiles, structureTiles);
                 
                 // Store structure if it meets criteria
-                if (structure.length > this.minStructureSize) {
-                    structures.push(structure);
+                if (structure.length > 0) {
+                    let box = this.getBoundingBox(structure);
+                    if(box.width > this.minStructureSize && box.height > this.minStructureSize) {
+                        structures.push(structure);
+                    }
                 }
             }
         }
@@ -173,5 +192,28 @@ export default class Layout{
         }
 
         return singleLayerMapData;
+    }
+
+    isCorner(x, y, box){
+        if(x === box.topLeft.x){
+            if(y === box.topLeft.y)                 return 0;    // topleft
+            if(y === box.topLeft.y + box.height-1)  return 3;    // bottomleft
+        }
+        if(y === box.topLeft.y){
+            if(x === box.topLeft.x + box.width-1)   return 1;    // topright
+        }
+        if( x === box.topLeft.x + box.width-1 &&
+            y === box.topLeft.y + box.height-1)     return 2;    // bottomright
+        
+        return -1;
+    }
+
+    isBorder(x, y, box){
+        if(y === box.topLeft.y)                 return 0;   // top
+        if(x === box.topLeft.x + box.width-1)   return 1;   // right
+        if(y === box.topLeft.y + box.height-1)  return 2;   // bottom
+        if(x === box.topLeft.x)                 return 3;   // left
+        
+        return -1;
     }
 }
