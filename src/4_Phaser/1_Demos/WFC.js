@@ -2,6 +2,7 @@ import Phaser from "../../../lib/phaserModule.js";
 import WFCModel from "../../2_WFC/1_Model/WFCModel.js";
 import IMAGES from "../../2_WFC/2_Input/IMAGES.js";
 import generateHouse from "../../3_Generators/generateHouse.js";
+import generateForest from "../../3_Generators/generateForest.js";
 import Layout from "../../5_Utility/getWorldLayout.js";
 import STRUCTURE_TILES from "../structureTiles.js";
 
@@ -31,8 +32,15 @@ export default class WFC extends Phaser.Scene {
   numRuns = 100;	// for this.getAverageGenerationDuration()
   printAveragePerformance = true;
 
-  //groundModel = new WFCModel().learn(IMAGES.GROUND, this.N, this.profileLearning, this.printPatterns);
-  //structuresModel = new WFCModel().learn(IMAGES.STRUCTURES, this.N, this.profileLearning, this.printPatterns);
+  groundModel = new WFCModel().learn(IMAGES.GROUND, this.N, this.profileLearning, this.printPatterns);
+  //structsModel = new WFCModel().learn(IMAGES.STRUCTURES, this.N, this.profileLearning, this.printPatterns);
+
+  generator = {
+    house: (region) => generateHouse({width: region.width, height: region.height}),
+    path: (region) => console.log("TODO: link path generator", region),
+    fence: (region) => console.log("TODO: link fence generator", region),
+    forest: (region) => generateForest({width: region.width, height: region.height})
+  };
 
   constructor() {
     super("wfcTestingScene");
@@ -180,45 +188,55 @@ export default class WFC extends Phaser.Scene {
   }
 
   generateMap(profile = false){
+    // generate ground
+    console.log("Using model for ground");
+    const groundImage = this.groundModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
+    if (!groundImage) return;
+
+    // generate a meta map (layout) 
     let metaImage = this.generateMetaMap(profile);
 
     // return performance profiles for models used
     if(profile){
+      // parse generated layout
       let wfcLayout = new Layout(
         metaImage,
         this.minStructreSize, 
         STRUCTURE_TILES["color_blocks"]
-      )
+      );
 
-      for(let fact of wfcLayout.worldFacts){
-        console.log(fact);
-      }
+      const tilemapImage = this.generateTilemap(wfcLayout);
+
+      this.displayMap(groundImage, tilemapImage, "tilemap");
 
       return {
         metaTiles: this.metaModel.performanceProfile,
       }
     }
+  }
 
-    /*
-    console.log("Using model for ground");
-    const groundImage = this.groundModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
-    if (!groundImage) return;
+  generateTilemap(layout){
+    let tilemapImage = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // empty map
+      
+    // generate all structures in layout
+    for(let structure of layout.worldFacts){
+      let region = structure.boundingBox;
+      const gen = this.generator[structure.type](region);
 
-    console.log("Using model for structures");
-    const structuresImage = this.structuresModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
-    if (!structuresImage) return;
+      if(!gen) continue;
 
-    this.displayMap(groundImage, structuresImage);
-    document.getElementById("thinking-icon").style.display = "none"; // hide
-
-    // return performance profiles for models used
-    if(profile){
-      return {
-        ground: this.groundModel.performanceProfile,
-        structs: this.structuresModel.performanceProfile,
+      for(let y = 0; y < region.height; y++){
+        for(let x = 0; x < region.width; x++){
+          // place generated structure tiles in tilemapImage
+          let dy = region.topLeft.y + y;
+          let dx = region.topLeft.x + x;
+          
+          tilemapImage[dy][dx] = gen[y][x];
+        }
       }
     }
-    */
+
+    return tilemapImage;
   }
 
   displayMap(groundImage, structuresImage, tilesetName) {
@@ -230,16 +248,17 @@ export default class WFC extends Phaser.Scene {
       tileWidth: this.tileSize,
       tileHeight: this.tileSize
     });
+    
     this.structuresMap = this.make.tilemap({
       data: structuresImage,
       tileWidth: this.tileSize,
       tileHeight: this.tileSize
     });
 
-    let tileset = this.structuresMap.addTilesetImage("meep", tilesetName);
+    let tileset = this.structuresMap.addTilesetImage("tileset", tilesetName, 16, 16, 0, 0, 1);
     
-    this.groundMap.createLayer(0, tileset, 0, 0);
-    this.structuresMap.createLayer(0, tileset, 0, 0);
+    this.groundMap.createLayer(0, tileset, 0, 0, 1);
+    this.structuresMap.createLayer(0, tileset, 0, 0, 1);
 
     for (const layer of this.multiLayerMapLayers) layer.setVisible(false);
   }	
