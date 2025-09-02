@@ -1,8 +1,9 @@
 import Phaser from "../../../lib/phaserModule.js";
-import WFCModel from "../../2_WFC/1_Model/WFCModel.js";
-import IMAGES from "../../2_WFC/2_Input/IMAGES.js";
+import WFCModel from "../../2_WFC/1_Model/wfcModel.js";
+import IMAGES from "../../2_WFC/2_Input/images.js";
 import generateHouse from "../../3_Generators/generateHouse.js";
 import generateForest from "../../3_Generators/generateForest.js";
+import generateFence from "../../3_Generators/generateFence.js";
 import Layout from "../../5_Utility/getWorldLayout.js";
 import STRUCTURE_TILES from "../structureTiles.js";
 
@@ -38,7 +39,7 @@ export default class WFC extends Phaser.Scene {
   generator = {
     house: (region) => generateHouse({width: region.width, height: region.height}),
     path: (region) => console.log("TODO: link path generator", region),
-    fence: (region) => console.log("TODO: link fence generator", region),
+    fence: (region) => generateFence({width: region.width, height: region.height}),
     forest: (region) => generateForest({width: region.width, height: region.height})
   };
 
@@ -220,10 +221,13 @@ export default class WFC extends Phaser.Scene {
       
     // generate all structures in layout
     for(let structure of layout.worldFacts){
+      console.log(`generating a ${structure.type}...`)
+
       let region = structure.boundingBox;
       const gen = this.generator[structure.type](region);
 
       if(!gen) continue;
+      console.log(`${structure.type} generation complete`)
 
       for(let y = 0; y < region.height; y++){
         for(let x = 0; x < region.width; x++){

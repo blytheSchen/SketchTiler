@@ -1,13 +1,14 @@
 import Phaser from "../../lib/phaserModule.js";
 import TILEMAP from "./TILEMAP.js";
-import Autotiler from "./Autotiler.js";
+//import Autotiler from "./Autotiler.js";
 
 //import Sketch from "./1_Demos/Sketch.js";
 import WFC from "./1_Demos/WFC.js";
 
 // import HouseDataMiner from "../5_Utility/HouseDataMiner.js";
 // import HouseDataMiner2 from "../5_Utility/HouseDataMiner2.js";
-// import TilemapDataMiner from "../5_Utility/TilemapDataMiner.js";
+// import TilemapDataMiner from "../5_Utility/tilemapDataMiner.js";
+// import FenceDataMiner from "../5_Utility/FenceDataMiner.js";
 
 export default function initPhaser() {
   window.game = new Phaser.Game({

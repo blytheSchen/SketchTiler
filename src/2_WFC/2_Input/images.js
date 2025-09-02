@@ -1,8 +1,9 @@
-import MAP1 from "./MAP1.js";
-import MAP2 from "./MAP2.js";
-import MAP3 from "./MAP3.js";
-import MAP4 from "./MAP4.js";
-import HOUSES from "./HOUSES.js";
+import MAP1 from "./map1.js";
+import MAP2 from "./map2.js";
+import MAP3 from "./map3.js";
+import MAP4 from "./map4.js";
+import HOUSES from "./houses.js";
+import FENCES from "./fences.js";
 
 /** @type {{ GROUND: TilemapImage[], STRUCTURES: TilemapImage[], HOUSES: TilemapImage[], FORESTS: TilemapImage[] }} */
 const IMAGES = {
@@ -21,6 +22,7 @@ const IMAGES = {
   HOUSES: HOUSES,
   FORESTS: [
     ...MAP1.FORESTS
-  ]
+  ],
+  FENCES: FENCES
 };
 export default IMAGES;
