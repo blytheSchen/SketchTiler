@@ -182,7 +182,7 @@ export default class WFC extends Phaser.Scene {
 
     const bgImage  = Array.from({ length: this.height }, () => Array(this.width).fill(0));
 
-    this.displayMap(bgImage, metaImage, "colorTiles");
+    //this.displayMap(bgImage, metaImage, "colorTiles");
     document.getElementById("thinking-icon").style.display = "none"; // hide
 
     return metaImage;
@@ -221,13 +221,13 @@ export default class WFC extends Phaser.Scene {
       
     // generate all structures in layout
     for(let structure of layout.worldFacts){
-      console.log(`generating a ${structure.type}...`)
+      //console.log(`generating a ${structure.type}...`)
 
       let region = structure.boundingBox;
       const gen = this.generator[structure.type](region);
 
       if(!gen) continue;
-      console.log(`${structure.type} generation complete`)
+      //console.log(`${structure.type} generation complete`)
 
       for(let y = 0; y < region.height; y++){
         for(let x = 0; x < region.width; x++){

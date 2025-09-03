@@ -10,6 +10,10 @@ const TILEMAP = {
   HOUSE_DOOR_TILES: [86, 90],             // red, blue
   HOUSE_DOUBLE_DOOR_LEFT_TILES: [87, 91], // red, blue
   HOUSE_DOUBLE_DOOR_RIGHT_TILES: [88, 92], // red, blue
-  VOID: [-1]
+  VOID: [-1],
+  FENCE_TOP_LEFT: [45],
+  FENCE_TOP_RIGHT: [47],
+  FENCE_BOTTOM_LEFT: [69],
+  FENCE_BOTTOM_RIGHT: [71],
 };
 export default TILEMAP;
