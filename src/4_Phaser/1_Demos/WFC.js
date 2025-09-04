@@ -60,8 +60,6 @@ export default class WFC extends Phaser.Scene {
     this.setupControls();
 
     this.colorBlock("tiny_town");
-
-    if(this.printPatterns) this.displayPatterns(this.metaModel.patterns, "colorTiles");
   }
 
   showInputImage() {
@@ -81,63 +79,6 @@ export default class WFC extends Phaser.Scene {
   }
 
   setupControls() {
-    /*
-    const phaser = document.getElementById("phaser");
-    const instructions = document.createElement("section");
-    instructions.innerHTML = `
-      <h2>Controls</h2>
-      <p>
-        (Opening the console is recommended) <br><br>
-        Generate: G <br>
-        Clear generation: C <br>
-        Get average generation duration over ${this.numRuns} runs: A
-      </p>
-    `;
-    phaser.append(instructions);
-    */
-    const phaser = document.getElementById("phaser");
-    const instructions = document.createElement("section");
-    instructions.innerHTML = `
-      <h2 class="title is-4">Controls</h2>
-
-      <div class="buttons mt-3">
-        <button id="generateBtn" class="button is-primary">Generate</button>
-        <button id="clearBtn" class="button is-warning">Clear</button>
-        <span id="overlay">
-          <input id="overlay-toggle"
-            type="checkbox" 
-            class="onoffswitch-checkbox"  
-            checked="false"
-            disabled
-          />
-          Toggle overlay
-        </span>
-      </div>
-      
-      <div class="field">
-        <h3 class="title is-5">Get Average Duration</h3>
-        <label class="label">Number of Runs</label>
-        <div class="control">
-          <input id="numRunsInput" class="input" type="number" min="1" value="${this.numRuns}">
-        </div>
-        <button id="averageBtn" class="button is-info">Generate</button>
-      </div>
-
-      <div id="progressWrapper"></div>
-
-      <div id="thinking-icon" class="spinner" style="display: none;"></div>
-
-      <div id="profileMessage"></div>
-    `;
-    phaser.append(instructions);
-
-    const progressWrapper = document.getElementById("progressWrapper");
-    progressWrapper.style.marginTop = "1rem"; 
-    progressWrapper.style.marginBottom = "1rem"; 
-    progressWrapper.innerHTML = `
-      <progress id="progressBar" class="progress is-info" value="0" max="100">0%</progress>
-    `;
-
     /* GENERATE */
     document.getElementById("generateBtn").addEventListener("click", async () => 
       runWithSpinner(async () => await this.getAverageGenerationDuration(1, this.printAveragePerformance))
@@ -163,13 +104,14 @@ export default class WFC extends Phaser.Scene {
 
     /* LEGACY KEYS */
     this.runWFC_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.G);
-    this.clear_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
-    this.timedRuns_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-
     this.runWFC_Key.on("down", () => 
       runWithSpinner(async () => await this.getAverageGenerationDuration(1, this.printAveragePerformance))
     );
+
+    this.clear_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
     this.clear_Key.on("down", () => this.clearMap());
+
+    this.timedRuns_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     this.timedRuns_Key.on("down", async () => 
       await this.getAverageGenerationDuration(this.numRuns, this.printAveragePerformance)
     );

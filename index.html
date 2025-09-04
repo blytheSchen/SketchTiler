@@ -9,17 +9,18 @@
   </head>
   <body>
     <div id="page">
+
+      <!-- SKETCHTILER APP -->
       <div id="app">
+        <!-- SKETCHPAD -->
         <div id="sketchpad">
           <canvas id="grid-canvas"></canvas>
           <canvas id="sketch-canvas"></canvas>
         </div>
+        <!-- sketchpad buttons -->
         <div id="buttons">
           <button id="house-button" class="button is-danger">House</button>
           <button id="forest-button" class="button is-success">Forest</button>
-          <!-- <button id="fence-button">Fence</button> -->
-          <!-- <button id="path-button">Path</button>   -->
-          <!-- <button id="straighten-lines-button">Straighten Lines</button> -->
           <span id="normalize">
             <input id="normalize-toggle"
               type="checkbox" 
@@ -33,21 +34,57 @@
           <button id="generate-button" class="button is-light">Generate</button>
           <button id="clear-button" class="button is-light">Clear</button>
         </div>
-        <div style="display:flex;  height:100vh; overflow:hidden; gap: 1em;">
+
+        <!-- PHASER -->
+        <div style="display:flex; overflow:hidden; gap: 1em;">
           <div id="phaser"></div>
-          <div id="pattern-panel" style="
-            width: 500px;
-            height: 400px;
-            overflow-y: auto;
-            background: #222;
-            padding: 10px;
-          "></div>
+          <div id="pattern-panel"></div>
         </div>
+
+        <!-- DEMOS -->
+        <!-- WFC demo -->
+        <div id="wfc-demo">
+          <h2 class="title is-4">Controls</h2>
+          <div class="buttons mt-3">
+            <button id="generateBtn" class="button is-primary">Generate</button>
+            <button id="clearBtn" class="button is-warning">Clear</button>
+            <span id="overlay">
+              <input id="overlay-toggle"
+                type="checkbox" 
+                class="onoffswitch-checkbox"  
+                checked="false"
+                disabled
+              />
+              Toggle overlay
+            </span>
+          </div>
+          
+          <div class="field">
+            <h3 class="title is-5">Get Average Duration</h3>
+            <label class="label">Number of Runs</label>
+            <div class="control">
+              <input id="numRunsInput" class="input" type="number" min="1" value="100">
+            </div>
+            <button id="averageBtn" class="button is-info">Generate</button>
+          </div>
+
+          <div id="progressWrapper" >
+            <progress id="progressBar" class="progress is-info" value="0" max="100">0%</progress>
+          </div>
+
+          <div id="thinking-icon" class="spinner" style="display: none;"></div>
+
+          <div id="profileMessage"></div>
+        </div>
+
+        <!-- EXPORTS -->
         <div id="export-buttons">
           <button id="export-map-button" class="button is-dark" disabled="true">Export map</button>
           <button id="export-sketch-button" class="button is-dark" disabled="true">Export sketch</button>
         </div>
       </div>
+
+      <!-- SKETCHTILER INSTRUCTIONS -->
       <div id="instructions" class="content">
         <h2 class="title is-2">SketchTiler - the sketch to tilemap application</h2>
 
@@ -67,7 +104,9 @@
           <li>If you encounter an error when generating, give it a few more tries before giving up</li>
         </ul>
       </div>
+
     </div>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

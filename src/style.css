@@ -11,9 +11,22 @@
   cursor: none;
 }
 
+#pattern-panel {
+  width: 500px;
+  height: 400px;
+  overflow-y: auto;
+  background: #222;
+  padding: 10px;
+}
+
 /* index.css */
 .hidden {
   display: none;
+}
+
+#progressWrapper {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 
 .spinner {
