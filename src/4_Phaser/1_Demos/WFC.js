@@ -91,10 +91,10 @@ export default class WFC extends Phaser.Scene {
     /* LAYOUT DISPLAY */
     this.overlayToggle = document.getElementById('overlay-toggle');
     this.overlayToggle.addEventListener("click", () => {
-      if(this.metaTileLayer){ 
-        this.metaTileLayer.setVisible(this.overlayToggle.checked);
+      if(this.layoutLayer){ 
+        this.layoutLayer.setVisible(this.overlayToggle.checked);
         if(!this.overlayToggle.checked) this.displayPatterns(this.structsModel.patterns, "tilemap", 1);
-        else this.displayPatterns(this.metaModel.patterns, "colorTiles");
+        else this.displayPatterns(this.layoutModel.patterns, "colorTiles");
       }
     });
 
@@ -122,14 +122,14 @@ export default class WFC extends Phaser.Scene {
     );
   }
 
-  generateMetaMap(){
-    console.log("Using model for meta tiles");
-    const metaImage = this.metaModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
-    if (!metaImage) return;
+  generateLayout(){
+    console.log("Using model for layout tiles");
+    const layoutImage = this.layoutModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
+    if (!layoutImage) return;
 
     document.getElementById("thinking-icon").style.display = "none"; // hide
 
-    return metaImage;
+    return layoutImage;
   }
 
   generateMap(scene){
@@ -142,14 +142,14 @@ export default class WFC extends Phaser.Scene {
     const groundImage = my.groundModel.generate(my.width, my.height, my.maxAttempts, my.logProgress, my.profileSolving, my.logProfile);
     if (!groundImage) return;
 
-    // generate a meta map (layout) 
-    let metaImage = my.generateMetaMap();
+    // generate a layout map (layout) 
+    let layoutImage = my.generateLayout();
 
     // return performance profiles for models used
     if(my.profileSolving){
       // parse generated layout
       let wfcLayout = new Layout(
-        metaImage,
+        layoutImage,
         my.minStructreSize, 
         STRUCTURE_TILES["color_blocks"]
       );
@@ -162,10 +162,10 @@ export default class WFC extends Phaser.Scene {
       my.displayMap(my.structuresMap, tilemapImage, "tilemap");
 
       // show color block version
-      my.displayMetaLayer(metaImage, "colorTiles", false); // make new color blocked layer
+      my.displayLayoutLayer(layoutImage, "colorTiles", false); // make new color blocked layer
 
       return {
-        metaTiles: my.metaModel.performanceProfile,
+        layoutTiles: my.layoutModel.performanceProfile,
       }
     }
   }
@@ -267,33 +267,33 @@ export default class WFC extends Phaser.Scene {
       layouts.push(mapLayout.getLayoutMap());
     }
 
-    // train meta map model on layout maps
-    this.metaModel = new WFCModel().learn(layouts, this.N, this.profileLearning, this.printPatterns);
+    // train layout map model on layout maps
+    this.layoutModel = new WFCModel().learn(layouts, this.N, this.profileLearning, this.printPatterns);
 
     // display
     if(displayLayout > 0){
-      this.displayMetaLayer(layouts[displayLayout], "colorTiles"); // display color blocked layout
+      this.displayLayoutLayer(layouts[displayLayout], "colorTiles"); // display color blocked layout
     }
   }
 
-  displayMetaLayer(layoutMap, tilesetName, vis = true){
-    if(this.metaMap) this.metaMap.destroy();
+  displayLayoutLayer(layoutMap, tilesetName, vis = true){
+    if(this.layoutMap) this.layoutMap.destroy();
 
-    this.metaMap = this.make.tilemap({
+    this.layoutMap = this.make.tilemap({
       data: layoutMap,
       tileWidth: this.tileSize,
       tileHeight: this.tileSize
     });
 
-    let tiles = this.metaMap.addTilesetImage("colors", tilesetName);
-    this.metaTileLayer = this.metaMap.createLayer(0, tiles, 0, 0);
-    this.metaTileLayer.setVisible(vis);
+    let tiles = this.layoutMap.addTilesetImage("colors", tilesetName);
+    this.layoutLayer = this.layoutMap.createLayer(0, tiles, 0, 0);
+    this.layoutLayer.setVisible(vis);
 
     // allow toggling of color block overlay
     this.overlayToggle.disabled = false;
     this.overlayToggle.checked = vis;
 
     // show layout patterns in pattern window
-    if(vis) this.displayPatterns(this.metaModel.patterns, "colorTiles");
+    if(vis) this.displayPatterns(this.layoutModel.patterns, "colorTiles");
   }
 }
