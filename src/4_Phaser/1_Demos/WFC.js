@@ -6,6 +6,7 @@ import generateForest from "../../3_Generators/generateForest.js";
 import generateFence from "../../3_Generators/generateFence.js";
 import Layout from "../../5_Utility/getWorldLayout.js";
 import STRUCTURE_TILES from "../structureTiles.js";
+import BENCHMARK from "../../5_Utility/Benchmarking.js";
 
 // hide sketchpad elements
 document.getElementById("sketchpad").classList.add("hidden");
@@ -30,7 +31,7 @@ export default class WFC extends Phaser.Scene {
   logProfile = false;
   minStructreSize = 2;
 
-  numRuns = 100;	// for this.getAverageGenerationDuration()
+  numRuns = 100;	
   printAveragePerformance = true;
 
   groundModel = new WFCModel().learn(IMAGES.GROUND, this.N, this.profileLearning, this.printPatterns);
@@ -81,7 +82,7 @@ export default class WFC extends Phaser.Scene {
   setupControls() {
     /* GENERATE */
     document.getElementById("generateBtn").addEventListener("click", async () => 
-      runWithSpinner(async () => await this.getAverageGenerationDuration(1, this.printAveragePerformance))
+      BENCHMARK.runWithSpinner(async () => await BENCHMARK.getAverageGenerationDuration(this.generateMap, this, 1, this.printAveragePerformance))
     );
     
     /* CLEAR */
@@ -98,17 +99,18 @@ export default class WFC extends Phaser.Scene {
     });
 
     /* GET AVERAGE */
+    document.getElementById("numRunsInput").value = 100;
     document.getElementById("numRunsInput").addEventListener("change", (e) => {
       this.numRuns = parseInt(e.target.value);
     });
     document.getElementById("averageBtn").addEventListener("click", async () => 
-      runWithSpinner(async () => await this.getAverageGenerationDuration(this.numRuns, this.printAveragePerformance))
+      BENCHMARK.runWithSpinner(async () => await BENCHMARK.getAverageGenerationDuration(this.generateMap, this, this.numRuns, this.printAveragePerformance))
     );
 
     /* LEGACY KEYS */
     this.runWFC_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.G);
     this.runWFC_Key.on("down", () => 
-      runWithSpinner(async () => await this.getAverageGenerationDuration(1, this.printAveragePerformance))
+      BENCHMARK.runWithSpinner(async () => await BENCHMARK.getAverageGenerationDuration(this.generateMap, this, 1, this.printAveragePerformance))
     );
 
     this.clear_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.C);
@@ -116,11 +118,11 @@ export default class WFC extends Phaser.Scene {
 
     this.timedRuns_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     this.timedRuns_Key.on("down", async () => 
-      await this.getAverageGenerationDuration(this.numRuns, this.printAveragePerformance)
+      await BENCHMARK.getAverageGenerationDuration(this.generateMap, this, this.numRuns, this.printAveragePerformance)
     );
   }
 
-  generateMetaMap(profile = false){
+  generateMetaMap(){
     console.log("Using model for meta tiles");
     const metaImage = this.metaModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
     if (!metaImage) return;
@@ -130,36 +132,40 @@ export default class WFC extends Phaser.Scene {
     return metaImage;
   }
 
-  generateMap(profile = false){
-    this.displayPatterns(this.structsModel.patterns, "tilemap", 1);
+  generateMap(scene){
+    let my = scene; // using my in place of this so it can be passed through benchmarking functions
+
+    my.displayPatterns(my.structsModel.patterns, "tilemap", 1);
     
     // generate ground
     console.log("Using model for ground");
-    const groundImage = this.groundModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
+    const groundImage = my.groundModel.generate(my.width, my.height, my.maxAttempts, my.logProgress, my.profileSolving, my.logProfile);
     if (!groundImage) return;
 
     // generate a meta map (layout) 
-    let metaImage = this.generateMetaMap(profile);
+    let metaImage = my.generateMetaMap();
 
     // return performance profiles for models used
-    if(profile){
+    if(my.profileSolving){
       // parse generated layout
       let wfcLayout = new Layout(
         metaImage,
-        this.minStructreSize, 
+        my.minStructreSize, 
         STRUCTURE_TILES["color_blocks"]
       );
 
-      const tilemapImage = this.generateTilemap(wfcLayout);
+      // use generated layout to generate and place structres in a complete tilemap
+      const tilemapImage = my.generateTilemapFromLayout(wfcLayout);
 
       // show tiled version
-      this.displayMap(groundImage, tilemapImage, "tilemap");
+      my.displayMap(my.groundMap, groundImage, "tilemap");
+      my.displayMap(my.structuresMap, tilemapImage, "tilemap");
 
       // show color block version
-      this.displayMetaLayer(metaImage, "colorTiles", false); // make new color blocked layer
+      my.displayMetaLayer(metaImage, "colorTiles", false); // make new color blocked layer
 
       return {
-        metaTiles: this.metaModel.performanceProfile,
+        metaTiles: my.metaModel.performanceProfile,
       }
     }
   }
@@ -254,74 +260,6 @@ export default class WFC extends Phaser.Scene {
     });
   }
 
-  async getAverageGenerationDuration(numRuns, print) {
-    let profiles = [];
-    const progressBar = document.getElementById("progressBar");
-
-    for (let i = 0; i < numRuns; i++) {
-      let profile = this.generateMap(true);
-      if(!profile){
-        // TODO: add contradictions counter here
-        i--;
-        continue;
-      }
-      profiles.push(profile);
-
-      // update progress bar
-      progressBar.value = ((i + 1) / numRuns) * 100;
-      await new Promise(resolve => setTimeout(resolve, 10)); // tweak delay as needed
-    }
-
-    let avg = this.sumAllProfiles(profiles);
-
-    for (const [modelName, modelProfile] of Object.entries(avg)) {
-      for (const [funcName, functionPerformance] of Object.entries(modelProfile)) {
-        avg[modelName][funcName] = (avg[modelName][funcName] / numRuns).toFixed(2);  
-      }
-    }
-
-    if(print){ 
-      const outputElement = document.getElementById("profileMessage");
-      const message = this.printProfile(avg, numRuns);
-      
-      outputElement.innerHTML = message.replace(/\n/g, '<br>');
-      console.log(this.printProfile(avg, numRuns));
-    }
-    // console.log(avg);
-
-    progressBar.value = 0;
-  }
-
-  sumAllProfiles(profiles) {
-    let sum = {};
-    for(let profile of profiles){
-      for (const [modelName, modelProfile] of Object.entries(profile)) {
-        if(!sum[modelName]) sum[modelName] = {};
-        for (const [funcName, functionPerformance] of Object.entries(modelProfile)) {
-          let runningTotal = sum[modelName][funcName] ?? 0;
-          runningTotal += functionPerformance;
-          sum[modelName][funcName] = runningTotal;
-        }
-      }
-    }
-
-    return sum;
-  }
-
-  printProfile(averages, numRuns = 1){
-    let message = `==========================================\n`;
-    message += `Average performance over ${numRuns} runs:\n`;
-    for (const [modelName, modelProfile] of Object.entries(averages)) {
-      message += `\n=== ${modelName.toUpperCase()} MODEL ===\n`;
-      for (const [funcName, functionPerformance] of Object.entries(modelProfile)) {
-        let val = averages[modelName][funcName];  
-        message += `${funcName}: ${val} ms\n`;
-      }
-    }
-    message += `\n==========================================`;
-    return message;
-  }
-
   clearMap(){
     for (const layer of this.multiLayerMapLayers) layer.setVisible(true);
     if (this.groundMap) this.groundMap.destroy();
@@ -371,15 +309,4 @@ export default class WFC extends Phaser.Scene {
     // show layout patterns in pattern window
     if(vis) this.displayPatterns(this.metaModel.patterns, "colorTiles");
   }
-
-}
-
-async function runWithSpinner(task) {
-  const spinner = document.getElementById("thinking-icon");
-  spinner.style.display = "inline-block";
-
-  setTimeout(() => {
-    task();
-    spinner.style.display = "none";
-  }, 1);
 }
