@@ -34,7 +34,7 @@ export default class WFC extends Phaser.Scene {
   printAveragePerformance = true;
 
   groundModel = new WFCModel().learn(IMAGES.GROUND, this.N, this.profileLearning, this.printPatterns);
-  //structsModel = new WFCModel().learn(IMAGES.STRUCTURES, this.N, this.profileLearning, this.printPatterns);
+  structsModel = new WFCModel().learn(IMAGES.STRUCTURES, this.N, this.profileLearning, this.printPatterns);
 
   generator = {
     house: (region) => generateHouse({width: region.width, height: region.height}),
@@ -59,7 +59,7 @@ export default class WFC extends Phaser.Scene {
     this.showInputImage();
     this.setupControls();
 
-    this.colorBlock("tiny_town");
+    this.learnLayout("tiny_town", 2);
   }
 
   showInputImage() {
@@ -87,11 +87,14 @@ export default class WFC extends Phaser.Scene {
     /* CLEAR */
     document.getElementById("clearBtn").addEventListener("click", () => this.clearMap());
     
-    /* COLOR BLOCK */
+    /* LAYOUT DISPLAY */
     this.overlayToggle = document.getElementById('overlay-toggle');
     this.overlayToggle.addEventListener("click", () => {
-      if(this.colorblockGFX) this.colorblockGFX.setVisible(this.overlayToggle.checked);
-      if(this.metaTileLayer) this.metaTileLayer.setVisible(this.overlayToggle.checked);
+      if(this.metaTileLayer){ 
+        this.metaTileLayer.setVisible(this.overlayToggle.checked);
+        if(!this.overlayToggle.checked) this.displayPatterns(this.structsModel.patterns, "tilemap", 1);
+        else this.displayPatterns(this.metaModel.patterns, "colorTiles");
+      }
     });
 
     /* GET AVERAGE */
@@ -122,15 +125,14 @@ export default class WFC extends Phaser.Scene {
     const metaImage = this.metaModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
     if (!metaImage) return;
 
-    const bgImage  = Array.from({ length: this.height }, () => Array(this.width).fill(0));
-
-    //this.displayMap(bgImage, metaImage, "colorTiles");
     document.getElementById("thinking-icon").style.display = "none"; // hide
 
     return metaImage;
   }
 
   generateMap(profile = false){
+    this.displayPatterns(this.structsModel.patterns, "tilemap", 1);
+    
     // generate ground
     console.log("Using model for ground");
     const groundImage = this.groundModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
@@ -152,9 +154,9 @@ export default class WFC extends Phaser.Scene {
 
       // show tiled version
       this.displayMap(groundImage, tilemapImage, "tilemap");
+
       // show color block version
-      //const bgImage  = Array.from({ length: this.height }, () => Array(this.width).fill(0));
-      //this.displayMap(bgImage, metaImage, "colorTiles", 0);
+      this.displayMetaLayer(metaImage, "colorTiles", false); // make new color blocked layer
 
       return {
         metaTiles: this.metaModel.performanceProfile,
@@ -326,87 +328,30 @@ export default class WFC extends Phaser.Scene {
     if (this.structuresMap) this.structuresMap.destroy();
   }
 
-  colorBlock(id){
-    // init layouts array with default input image
-    let layouts = [
-      new Layout(
-        {layers: this.multiLayerMapLayers}, 
-        this.minStructreSize, 
-        STRUCTURE_TILES[id]
-      ).getLayoutMap(),
-    ];
+  learnLayout(structures_id, displayLayout = -1){
+    let layouts = []
 
-    let metaInputIndex = 0;
-    this.makeMetaTileLayer(layouts[metaInputIndex], "colorTiles"); // display color blocked default input image 
-
-    this.metaMapSwitch_Key = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.M);
-    this.metaMapSwitch_Key.on("down", () => {
-      metaInputIndex++;
-      if(metaInputIndex === layouts.length) metaInputIndex = 0;
-      this.makeMetaTileLayer(layouts[metaInputIndex], "colorTiles");
-    });
-
-    // add more inputs
+    // create layouts from structure maps
     for(let structureMap of IMAGES.STRUCTURES){
-      layouts.push(
-        new Layout(
-          structureMap,
-          this.minStructreSize, 
-          STRUCTURE_TILES[id]
-        ).getLayoutMap()
-      )
+      const mapLayout = new Layout(
+        structureMap,
+        this.minStructreSize, 
+        STRUCTURE_TILES[structures_id]
+      );
+
+      layouts.push(mapLayout.getLayoutMap());
     }
 
+    // train meta map model on layout maps
     this.metaModel = new WFCModel().learn(layouts, this.N, this.profileLearning, this.printPatterns);
 
-    this.overlayToggle.disabled = false;
-  }
-
-  // TEMP: just copied the logic here from Demo_Sketch.js for now
-  // TODO: refactor this function into a global util
-  // visualizer/debug
-  fillTiles(layoutData) {
-    const COLORS = [
-      "#0f0f0f",
-      "#f54242",
-      "#009632",
-      "#0000ff",
-      "#f5c842",
-    ];
-
-    // init colorblock gfx with black bg
-    this.colorblockGFX = this.add.graphics();
-    this.colorblockGFX.fillStyle("0x000000", 1);
-    this.colorblockGFX.fillRect(
-      0, 0, this.width * this.tileSize, this.height * this.tileSize
-    );
-
-    for(let structure of layoutData){
-      let color = COLORS[structure.color];
-      color = color.replace(/\#/g, "0x"); // make hex-formatted color readable for phaser
-      this.colorblockGFX.fillStyle(color);
-
-      // data should have all coords to be filled as an array of {x, y}
-      if (structure.trace) {
-        let data = structure.trace;
-
-        for (let i = 0; i < data.length; i++) {
-          let { x, y } = data[i];
-          this.colorblockGFX.fillRect(this.tileSize * x, this.tileSize * y, this.tileSize, this.tileSize);
-        }
-      } else {
-        let data = structure.boundingBox;
-        this.colorblockGFX.fillRect(
-          data.topLeft.x * this.tileSize, 
-          data.topLeft.y * this.tileSize, 
-          data.width  * this.tileSize, 
-          data.height * this.tileSize
-        );
-      }
+    // display
+    if(displayLayout > 0){
+      this.displayMetaLayer(layouts[displayLayout], "colorTiles"); // display color blocked layout
     }
   }
 
-  makeMetaTileLayer(layoutMap, tilesetName){
+  displayMetaLayer(layoutMap, tilesetName, vis = true){
     if(this.metaMap) this.metaMap.destroy();
 
     this.metaMap = this.make.tilemap({
@@ -417,6 +362,14 @@ export default class WFC extends Phaser.Scene {
 
     let tiles = this.metaMap.addTilesetImage("colors", tilesetName);
     this.metaTileLayer = this.metaMap.createLayer(0, tiles, 0, 0);
+    this.metaTileLayer.setVisible(vis);
+
+    // allow toggling of color block overlay
+    this.overlayToggle.disabled = false;
+    this.overlayToggle.checked = vis;
+
+    // show layout patterns in pattern window
+    if(vis) this.displayPatterns(this.metaModel.patterns, "colorTiles");
   }
 
 }
