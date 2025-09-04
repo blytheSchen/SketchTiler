@@ -37,6 +37,10 @@ export default class WFC extends Phaser.Scene {
   groundModel = new WFCModel().learn(IMAGES.GROUND, this.N, this.profileLearning, this.printPatterns);
   structsModel = new WFCModel().learn(IMAGES.STRUCTURES, this.N, this.profileLearning, this.printPatterns);
 
+  /**
+   * Structure generators keyed by type.
+   * @type {Object<string, function(Object): number[][]>}
+   */
   generator = {
     house: (region) => generateHouse({width: region.width, height: region.height}),
     path: (region) => console.log("TODO: link path generator", region),
@@ -63,6 +67,10 @@ export default class WFC extends Phaser.Scene {
     this.learnLayout("tiny_town", 2);
   }
 
+  /**
+   * Display the loaded Tiled map in Phaser.
+   * @private
+   */
   showInputImage() {
     this.multiLayerMap = this.add.tilemap("tinyTownMap", 16, 16, 40, 25);
     this.tileset = this.multiLayerMap.addTilesetImage("kenney-tiny-town", "tilemap");
@@ -79,6 +87,10 @@ export default class WFC extends Phaser.Scene {
     }
   }
 
+  /**
+   * Setup DOM buttons and keyboard controls for the scene.
+   * @private
+   */
   setupControls() {
     /* GENERATE */
     document.getElementById("generateBtn").addEventListener("click", async () => 
@@ -122,16 +134,45 @@ export default class WFC extends Phaser.Scene {
     );
   }
 
-  generateLayout(){
-    console.log("Using model for layout tiles");
-    const layoutImage = this.layoutModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
-    if (!layoutImage) return;
+  /**
+   * Train layout model on structure layouts.
+   * 
+   * @param {string} structuresID - Key for STRUCTURE_TILES to use.
+   * @param {number} [displayLayout=-1] - Index of layout to display, or -1 to skip.
+   */
+  learnLayout(structuresID, displayLayout = -1){
+    let layouts = []
 
-    document.getElementById("thinking-icon").style.display = "none"; // hide
+    // create layouts from structure maps
+    for(let structureMap of IMAGES.STRUCTURES){
+      const mapLayout = new Layout(
+        structureMap,
+        this.minStructreSize, 
+        STRUCTURE_TILES[structuresID]
+      );
 
-    return layoutImage;
+      layouts.push(mapLayout.getLayoutMap());
+    }
+
+    // train layout map model on layout maps
+    this.layoutModel = new WFCModel().learn(layouts, this.N, this.profileLearning, this.printPatterns);
+
+    // display
+    if(displayLayout > 0){
+      this.displayLayout(layouts[displayLayout], "colorTiles"); // display color blocked layout
+    }
   }
 
+  /**
+   * Generate a map using HSWFC.
+   * First, generate the ground as a separate, backgound layer.
+   * Next, generate a map layout using the pretrained layout model.
+   * Then, call tile-based structure generators on each structure in the generated layout, and place those structures in the world map.
+   * Finally, display the finished world.
+   * 
+   * @param {WFC} scene - Current WFC scene instance. Using in place of this so function may be ran though benchmarking functions.
+   * @returns {Object|undefined} Performance profiles if profiling is enabled.
+   */
   generateMap(scene){
     let my = scene; // using my in place of this so it can be passed through benchmarking functions
 
@@ -162,14 +203,37 @@ export default class WFC extends Phaser.Scene {
       my.displayMap(my.structuresMap, tilemapImage, "tilemap");
 
       // show color block version
-      my.displayLayoutLayer(layoutImage, "colorTiles", false); // make new color blocked layer
+      my.displayLayout(layoutImage, "colorTiles", false); // make new color blocked layer
 
       return {
         layoutTiles: my.layoutModel.performanceProfile,
       }
     }
+  }  
+  
+  /**
+   * Generate a layout map using the layout WFC model.
+   * This is the highest hierarchical level of our generation pipeline, sketching out a world with structures (but not including any structural details).
+   * 
+   * @returns {number[][]|undefined} The generated layout as a 2D array.
+   */
+  generateLayout(){
+    console.log("Using model for layout tiles");
+    const layoutImage = this.layoutModel.generate(this.width, this.height, this.maxAttempts, this.logProgress, this.profileSolving, this.logProfile);
+    if (!layoutImage) return;
+
+    document.getElementById("thinking-icon").style.display = "none"; // hide
+
+    return layoutImage;
   }
 
+  /**
+   * Build a full tilemap from a generated layout.
+   * Calls structure generator for each structure in the layout, then places them in a 2D array.
+   * 
+   * @param {Layout} layout - Layout object containing world facts and regions.
+   * @returns {number[][]} Generated tilemap.
+   */
   generateTilemapFromLayout(layout){
     let tilemapImage = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // empty map
       
@@ -194,6 +258,14 @@ export default class WFC extends Phaser.Scene {
     return tilemapImage;
   }
   
+  /**
+   * Display a 2D tiles array as a Phaser Tilemap.
+   * 
+   * @param {Phaser.Tilemaps.Tilemap} map - Existing tilemap (will be destroyed and remade).
+   * @param {number[][]} tilesArray - 2D array of tile IDs.
+   * @param {string} tilesetName - Tileset key loaded in Phaser.
+   * @param {number} [gid=1] - Tile ID offset (firstgid).
+   */
   displayMap(map, tilesArray, tilesetName, gid = 1) {
     if (map) map.destroy();   // destroy old version of map
 
@@ -208,6 +280,41 @@ export default class WFC extends Phaser.Scene {
     map.createLayer(0, tileset, 0, 0, 1);
   }	
 
+  /**
+   * Display a layout map as a color-blocked overlay.
+   * 
+   * @param {number[][]} layoutMap - Layout tiles.
+   * @param {string} tilesetName - Tileset to use for color tiles.
+   * @param {boolean} [vis=true] - Whether to show the overlay immediately.
+   */
+  displayLayout(layoutMap, tilesetName, vis = true){
+    if(this.layoutMap) this.layoutMap.destroy();
+
+    this.layoutMap = this.make.tilemap({
+      data: layoutMap,
+      tileWidth: this.tileSize,
+      tileHeight: this.tileSize
+    });
+
+    let tiles = this.layoutMap.addTilesetImage("colors", tilesetName);
+    this.layoutLayer = this.layoutMap.createLayer(0, tiles, 0, 0);
+    this.layoutLayer.setVisible(vis);
+
+    // allow toggling of color block overlay
+    this.overlayToggle.disabled = false;
+    this.overlayToggle.checked = vis;
+
+    // show layout patterns in pattern window
+    if(vis) this.displayPatterns(this.layoutModel.patterns, "colorTiles");
+  }
+
+  /**
+   * Render pattern previews into the pattern panel.
+   * 
+   * @param {number[][][]} patterns - List of NxN pattern matrices.
+   * @param {string} tilesetName - Tileset used for drawing.
+   * @param {number} [indexOffset=0] - Offset for tile indices.
+   */
   displayPatterns(patterns, tilesetName, indexOffset = 0) {
     this.tilesetImage = this.textures.get(tilesetName).getSourceImage();
     this.tilesetColumns = this.tilesetImage.width / this.tileSize;
@@ -247,53 +354,13 @@ export default class WFC extends Phaser.Scene {
     });
   }
 
+  /**
+   * Clear generated maps and reset visibility to original input layers.
+   */
   clearMap(){
-    for (const layer of this.multiLayerMapLayers) layer.setVisible(true);
     if (this.groundMap) this.groundMap.destroy();
     if (this.structuresMap) this.structuresMap.destroy();
-  }
 
-  learnLayout(structures_id, displayLayout = -1){
-    let layouts = []
-
-    // create layouts from structure maps
-    for(let structureMap of IMAGES.STRUCTURES){
-      const mapLayout = new Layout(
-        structureMap,
-        this.minStructreSize, 
-        STRUCTURE_TILES[structures_id]
-      );
-
-      layouts.push(mapLayout.getLayoutMap());
-    }
-
-    // train layout map model on layout maps
-    this.layoutModel = new WFCModel().learn(layouts, this.N, this.profileLearning, this.printPatterns);
-
-    // display
-    if(displayLayout > 0){
-      this.displayLayoutLayer(layouts[displayLayout], "colorTiles"); // display color blocked layout
-    }
-  }
-
-  displayLayoutLayer(layoutMap, tilesetName, vis = true){
-    if(this.layoutMap) this.layoutMap.destroy();
-
-    this.layoutMap = this.make.tilemap({
-      data: layoutMap,
-      tileWidth: this.tileSize,
-      tileHeight: this.tileSize
-    });
-
-    let tiles = this.layoutMap.addTilesetImage("colors", tilesetName);
-    this.layoutLayer = this.layoutMap.createLayer(0, tiles, 0, 0);
-    this.layoutLayer.setVisible(vis);
-
-    // allow toggling of color block overlay
-    this.overlayToggle.disabled = false;
-    this.overlayToggle.checked = vis;
-
-    // show layout patterns in pattern window
-    if(vis) this.displayPatterns(this.layoutModel.patterns, "colorTiles");
+    for (const layer of this.multiLayerMapLayers) layer.setVisible(true);
   }
 }
