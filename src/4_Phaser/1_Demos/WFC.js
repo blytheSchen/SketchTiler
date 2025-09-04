@@ -10,6 +10,9 @@
 
   Queue_RingBuffer:
   Generating 10 times took 22758.00 ms, with an average duration of 2275.80 ms
+
+  Gave up:
+  Generating 10 times took 19145.30 ms, with an average duration of 1914.53 ms
 */
 
 import Phaser from "../../../lib/phaserModule.js";
