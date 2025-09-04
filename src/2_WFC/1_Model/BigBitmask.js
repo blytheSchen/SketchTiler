@@ -1,25 +1,10 @@
 /**
- * @fileoverview
- * If you were to implement `data` in 'Matrix.js' as a single `ArrayBuffer`
- * that stored the bytes for the `Uint32Arrays` of the `FasterFasterBigBitmasks` that are used by the cells constituting the wave matrix,
- * you'd be approaching the limits of how optimized you can get with numeric arrays in JavaScript.
- * This design maximizes sequential memory accessing and CPU cache efficiency.
- * 
- * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer
- * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array
- * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array#different_ways_to_create_a_uint32array Look at the '// From an ArrayBuffer' section
- * 
- * Professor Adam Smith, during CMPM 121, was the one that first taught me
- * that you could work with typed arrays and bytes in JavaScript just like you could in C/C++.
- * 
- * If you really need some help on this, you could contact him.
- * He's also done research on WFC and is super knowledgeable on it in general.
- */
-
-/**
  * Represents a bitmask that's able to store more bits than a standard integer bitmask (32 bits).
- * There are provided methods for interfacing with this class.
  * A `BigBitmask` is to a bitmask as a `BigInt` is to a `number`.
+ * There are provided methods for interfacing with this class.
+ * 
+ * Use the `buffer` parameter during contruction when making a collection of `BigBitmasks`
+ * to take advantage of the performance gains of sequential memeory access and CPU caching.
  * 
  * Bitmask lingo for understanding methods:
  * - 'Filled' bitmask         = a bitmask where all bits are 1.
@@ -34,35 +19,24 @@ export default class BigBitmask {
   /** @type {number} */
   static BYTES_PER_BITMASK = 4;
 
-  /** @type {number} */
-  static UINT32_MAX_VALUE = 4294967295; // 2^32 - 1
-
   /**
    * Since bitmasks are just a collection of bits and so are integers (e.g. 1001 = 9), integers are bitmasks!
-   * And since a single int has a size of 4 bytes meaning it can only store up to 32 bits,
+   * And since a single int has a size of 4 bytes meaning it can only mask for up to 32 bits,
    * we can use an array of ints to represent one giant int.
    * 
    * Note that sometimes it may make more sense to view `bits` as one giant array of bits (or one giant int/bitmask),
    * while othertimes it may make more sense to view it as an array of groups of bits (or an int/bitmask array).
+   * 
    * @type {Uint32Array}
    */
   bits;
-  
-  /**
-   * The number of bits this `BigBitmask` is supposed to mask.
-   * This value of `numBits` is not necessarily equal to the number of bits used by `bits`.
-   * TODO: explain why and this example better (e.g. `numBits` = 50, num bits in `bits` = 62)
-   * @type {number}
-   */
-  numBits;
 
   /**
-   * @param {number} numBits In regards to WFC, this value is going to be equal to the number of patterns.
-   * @param {ArrayBuffer} [buffer] The `ArrayBuffer` storing the bits to this `BigBitmask` to use.
-   * @param {number} [byteOffset] The byte offset of this `BigBitmask`'s bits within `buffer`.
+   * @param {number} numBits In regards to WFC, this value is equal to the number of patterns learned.
+   * @param {ArrayBuffer} [buffer] The `ArrayBuffer` storing the bits for this `BigBitmask` to use.
+   * @param {number} [byteOffset] The byte offset of this `BigBitmask`'s bits within `buffer`. 
    */
   constructor(numBits, buffer = undefined, byteOffset = undefined) {
-    this.numBits = numBits;
     this.bits = buffer
       ? new Uint32Array(buffer, byteOffset, BigBitmask.bitsToBitmasks((numBits)))
       : new Uint32Array(BigBitmask.bitsToBitmasks((numBits)));
@@ -78,14 +52,16 @@ export default class BigBitmask {
   }
 
   /**
-   * Returns the minimum amount of bytes needed to create a `BigBitmask` that can store `numBits`.
+   * Returns the minimum amount of bytes needed by a `BigBitmask` to store `numBits` bits.
+   * @param {number} numBits
+   * @returns {number}
    */
   static bitsToSizeInBytes(numBits) {
     return BigBitmask.bitsToBitmasks(numBits) * BigBitmask.BYTES_PER_BITMASK;
   }
 
   /**
-   * Returns an empty bitmask where only the bit at `index` (counting right to left) is set to 1.
+   * Returns a bitmask where only the bit at `index` is set to 1.
    * @example 0 (decimal) -> 1 (binary)
    * @example 3 (decimal) -> 1000 (binary)
    * @param {number} index
@@ -97,30 +73,15 @@ export default class BigBitmask {
 
   /**
    * Returns whether two `BigBitmasks` have identical bit values.
-   * @param {BigBitmask} bb1
-   * @param {BigBitmask} bb2
+   * @param {BigBitmask} bigBitmask1
+   * @param {BigBitmask} bigBitmask2
    * @returns {boolean}
    */
-  static EQUALS(bb1, bb2) {
-    for (let i = 0; i < bb1.bits.length; i++)
-      if (bb1.bits[i] !== bb2.bits[i]) return false;
+  static EQUALS(bigBitmask1, bigBitmask2) {
+    for (let i = 0; i < bigBitmask1.bits.length; i++)
+      if (bigBitmask1.bits[i] !== bigBitmask2.bits[i]) return false;
 
     return true;
-  }
-
-  /**
-   * Returns a new `BigBitmask` that's the result of a bitwise AND (&) operation on two other `BigBitmask`s.
-   * @param {BigBitmask} bb1
-   * @param {BigBitmask} bb2
-   * @returns {BigBitmask}
-   */
-  static AND(bb1, bb2) {
-    const result = new BigBitmask(bb1.bits.length * BigBitmask.BITS_PER_BITMASK);
-
-    for (let i = 0; i < bb1.bits.length; i++)
-      result.bits[i] = bb1.bits[i] & bb2.bits[i];
-    
-    return result;
   }
 
   /**
@@ -151,7 +112,11 @@ export default class BigBitmask {
    */
   fill() {
     // TODO: make this function
-    // You will need to use this.numBits and likely also the max value of a 32 bit unsigned int (2^32 - 1)
+
+    // note: you can't simply just use this.bits.fill()
+    // because this `BigBitmask` may hold more bits than it's supposed to mask
+    // (hence why we need `BigBitmask.bitsToBitmasks()`)
+
     throw new Error("Method not implemented yet.")
   }
 
@@ -178,11 +143,13 @@ export default class BigBitmask {
    * Unsets any set bits in this `BigBitmask` that are unset in `other`.
    * This method is analogous to a bitwise AND assignment (&=) operation.
    * @param {BigBitmask} other
-   * @returns {void}
+   * @returns {this}
    */
   intersectWith(other) {
     for (let i = 0; i < this.bits.length; i++)
       this.bits[i] &= other.bits[i];
+
+    return this;
   }
 
   /**

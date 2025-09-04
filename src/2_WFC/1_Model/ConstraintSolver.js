@@ -212,7 +212,7 @@ export default class ConstraintSolver {
           cell1_PossibleAdjacentPatterns_Bitmask.mergeWith(i_AdjacentPatterns_Bitmask);
         }
 
-        const cell2_NewPossiblePatterns_Bitmask = BigBitmask.AND(cell2_PossiblePatterns_Bitmask, cell1_PossibleAdjacentPatterns_Bitmask);
+        const cell2_NewPossiblePatterns_Bitmask = cell1_PossibleAdjacentPatterns_Bitmask.intersectWith(cell2_PossiblePatterns_Bitmask);
 
         const contradictionCreated = cell2_NewPossiblePatterns_Bitmask.isEmpty();
         if (contradictionCreated) return true;

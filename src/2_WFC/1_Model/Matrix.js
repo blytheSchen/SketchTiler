@@ -37,37 +37,42 @@ export default class Matrix {
   }
 
   /**
-   * @param {Array[] | Int32Array[] | Uint32Array[]} array2d
-   * @param {ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor} ArrayType
-   * @returns {Matrix}
+   * Returns the element at position (`x`, `y`).
+   * This method is the `Matrix` equivalent to `array2d[y][x]`.
+   * @param {number} x 
+   * @param {number} y 
+   * @returns {number | any} Note: an element of type `any` can be returned **if and only if** `ArrayType` was set to `Array` during this `Matrix`'s construction.
    */
-  static from2dArray(array2d, ArrayType) {
-    const width = array2d[0].length;
-    const height = array2d.length;
+  get(x, y) {
+    return this.data[this.index(x, y)];
+  }
+
+  /**
+   * Sets the element at position (`x`, `y`) to `value`.
+   * This method is the `Matrix` equivalent to `array2d[y][x] = value`.
+   * @param {number} x 
+   * @param {number} y 
+   * @param {number | any} value Note: `value` can be of type `any` **if and only if** `ArrayType` was set to `Array` during this `Matrix`'s construction.
+   */
+  set(x, y, value) {
+    this.data[this.index(x, y)] = value;
+  }
+
+  /**
+   * Converts the 2D position (`x`, `y`) to its equivalent 1D array index in row-major (row by row, column by column) order.
+   * @param {number} x 
+   * @param {number} y 
+   * @returns {number}
+   */
+  index(x, y) {
+    if (this.outOfRange(x, y))
+      throw new RangeError(`Position out of range: (${x}, ${y})`);
     
-    const matrix = new Matrix(width, height, ArrayType);
-    for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      matrix.set(x, y, array2d[y][x]);
-    }}
-    return matrix;
+    return y * this.width + x;
   }
 
   /**
-   * @param {Matrix} matrix
-   * @param {ArrayConstructor | Int32ArrayConstructor | Uint32ArrayConstructor} ArrayType
-   * @returns {Matrix}
-   */
-  static fromMatrix(matrix, ArrayType = Array) {
-    const newMatrix = new Matrix(matrix.width, matrix.height, ArrayType);
-    for (let i = 0; i < matrix.data.length; i++) {
-      newMatrix.data[i] = matrix.data[i];
-    }
-    return newMatrix;
-  }
-
-  /**
-   * Returns whether the position (`x`, `y`) does not exist within this `Matrix`.
+   * Returns whether an element at position (`x`, `y`) exists within this `Matrix`.
    * @param {number} x 
    * @param {number} y 
    * @returns {boolean}
@@ -77,39 +82,8 @@ export default class Matrix {
   }
 
   /**
-   * Converts 2D coordinates (`x`, `y`) to a 1D row-major array index.
-   * @param {number} x 
-   * @param {number} y 
-   * @returns {number}
-   */
-  index(x, y) {
-    if (this.outOfRange(x, y)) throw new RangeError(`Position out of range: (${x}, ${y})`);
-    return y * this.width + x;
-  }
-
-  /**
-   * Returns the element at position (`x`, `y`).
-   * @param {number} x 
-   * @param {number} y 
-   * @returns {number | any} Note: an element of type `any` can be returned **if and only if** this `Matrix` is backed by a plain `Array`.
-   */
-  get(x, y) {
-    return this.data[this.index(x, y)];
-  }
-
-  /**
-   * Sets the element at position (`x`, `y`) to `value`.
-   * @param {number} x 
-   * @param {number} y 
-   * @param {number | any} value Note: `value` can be of type `any` **if and only if** this `Matrix` is backed by a plain `Array`.
-   */
-  set(x, y, value) {
-    this.data[this.index(x, y)] = value;
-  }
-
-  /**
    * Allows us to iterate through the `Matrix` within for...of loops in row-major (row by row, column by column) order.
-   * Yields the element, its x position, its y position, and its index each iteration.
+   * Yields a list containing the element, its x position, its y position, and its index each iteration.
    * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_generators
    * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_generators#iterables
    * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_generators#user-defined_iterables
