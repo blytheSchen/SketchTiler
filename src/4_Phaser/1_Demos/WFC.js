@@ -136,7 +136,7 @@ export default class WFC extends Phaser.Scene {
     let my = scene; // using my in place of this so it can be passed through benchmarking functions
 
     my.displayPatterns(my.structsModel.patterns, "tilemap", 1);
-    
+
     // generate ground
     console.log("Using model for ground");
     const groundImage = my.groundModel.generate(my.width, my.height, my.maxAttempts, my.logProgress, my.profileSolving, my.logProfile);
@@ -170,18 +170,15 @@ export default class WFC extends Phaser.Scene {
     }
   }
 
-  generateTilemap(layout){
+  generateTilemapFromLayout(layout){
     let tilemapImage = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // empty map
       
     // generate all structures in layout
     for(let structure of layout.worldFacts){
-      //console.log(`generating a ${structure.type}...`)
-
       let region = structure.boundingBox;
       const gen = this.generator[structure.type](region);
 
-      if(!gen) continue;
-      //console.log(`${structure.type} generation complete`)
+      if(!gen) continue;  // if structure generation fails, just move on
 
       for(let y = 0; y < region.height; y++){
         for(let x = 0; x < region.width; x++){
@@ -197,28 +194,18 @@ export default class WFC extends Phaser.Scene {
     return tilemapImage;
   }
   
-  displayMap(groundImage, structuresImage, tilesetName, gid = 1) {
-    if (this.groundMap) this.groundMap.destroy();
-    if (this.structuresMap) this.structuresMap.destroy();
+  displayMap(map, tilesArray, tilesetName, gid = 1) {
+    if (map) map.destroy();   // destroy old version of map
 
-    this.groundMap = this.make.tilemap({
-      data: groundImage,
-      tileWidth: this.tileSize,
-      tileHeight: this.tileSize
-    });
-    
-    this.structuresMap = this.make.tilemap({
-      data: structuresImage,
+    map = this.make.tilemap({ // make a new tilemap using tiles array
+      data: tilesArray,
       tileWidth: this.tileSize,
       tileHeight: this.tileSize
     });
 
-    let tileset = this.structuresMap.addTilesetImage("tileset", tilesetName, 16, 16, 0, 0, gid);
-    
-    this.groundMap.createLayer(0, tileset, 0, 0, 1);
-    this.structuresMap.createLayer(0, tileset, 0, 0, 1);
-
-    for (const layer of this.multiLayerMapLayers) layer.setVisible(false);
+    // make a layer to make new map visible
+    let tileset = map.addTilesetImage("tileset", tilesetName, 16, 16, 0, 0, gid);
+    map.createLayer(0, tileset, 0, 0, 1);
   }	
 
   displayPatterns(patterns, tilesetName, indexOffset = 0) {
