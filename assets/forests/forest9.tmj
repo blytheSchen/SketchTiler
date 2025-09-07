@@ -1,0 +1,37 @@
+{ "compressionlevel":-1,
+ "height":6,
+ "infinite":false,
+ "layers":[
+        {
+         "data":[0, 0, 0, 5, 28, 30,
+            0, 29, 0, 17, 0, 28,
+            28, 5, 0, 95, 0, 5,
+            0, 17, 0, 0, 0, 17,
+            5, 0, 0, 4, 0, 95,
+            17, 28, 0, 16, 29, 28],
+         "height":6,
+         "id":1,
+         "name":"Tile Layer 1",
+         "opacity":1,
+         "type":"tilelayer",
+         "visible":true,
+         "width":6,
+         "x":0,
+         "y":0
+        }],
+ "nextlayerid":2,
+ "nextobjectid":1,
+ "orientation":"orthogonal",
+ "renderorder":"right-down",
+ "tiledversion":"1.10.2",
+ "tileheight":16,
+ "tilesets":[
+        {
+         "firstgid":1,
+         "source":"..\/..\/..\/Tiled-files\/tinyTown_Tilemap_Packed.tsx"
+        }],
+ "tilewidth":16,
+ "type":"map",
+ "version":"1.10",
+ "width":6
+}
