@@ -76,4 +76,10 @@ export class MouseDisplayable {
       ctx.fill();
     }
   }
+
+  hide(){
+    this.lineThickness = 0;
+    this.mouse.x = -1;
+    this.mouse.y = -1;
+  }
 }

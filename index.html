@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SketchTiler</title>
-    <link rel="stylesheet" href="/index.css">
+
+    <link rel="stylesheet" href="/src/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <!-- using JSZip for exports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   </head>
+  
   <body>
     <div id="page">
       <div id="app">
@@ -34,28 +39,32 @@
           <button id="clear-button" class="button is-light">Clear</button>
         </div>
         <div id="phaser"></div>
+        <div id="export-buttons">
+          <button id="export-map-button" class="button is-dark" disabled="true">Export map</button>
+          <button id="export-sketch-button" class="button is-dark" disabled="true">Export sketch</button>
+        </div>
       </div>
       <div id="instructions" class="content">
-        <h2 class="title is-2">SketchTiler - the sketch to tilemap application</h2>
-
-        <h3 class="subtitle is-4">Instructions</h3>
+        <h2 class="title is-2">SketchTiler - The sketch to tilemap application</h2>
+        
+        <h3 class="subtitle is-4">Instructions:</h3>
         <ul>
           <li>The "House" and "Forest" buttons are structure pens. To draw a house, use the house pen, etc.</li>
           <li>The “Normalize Shapes” toggle automatically interprets your strokes into the shape it most resembles.</li>
           <li>Press “Clear” to completely wipe the canvas.</li>
           <li>Press “Generate” to have a tilemap generated from your sketch. It will take some time.</li>
-          <li>You can still draw new structures after you’ve pressed Generate, however your existing map will be re-generated and look different.</li>
+          <li>You can still draw new structures after you've pressed Generate, however your existing map will be re-generated and look different.</li>
           <li>Structures generated from your sketches will have full opacity, whereas background suggestions will be partially transparent.</li>
         </ul>
-
-        <h3>Jankiness you'll unfortunately have to deal with for now</h3>
+        
+        <h3>Jankiness you'll unfortunately have to deal with for now:</h3>
         <ul>
           <li>You can draw structures using multiple strokes, however, strokes belonging to the same structure should be close to each other (or else they might be interpreted as multiple structures).</li>
           <li>If you encounter an error when generating, give it a few more tries before giving up</li>
         </ul>
       </div>
     </div>
-    <script type="module" src="/index.js"></script>
-    <script type="module" src="/src/1_Sketchpad/sketchpad.js"></script>
+    
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>

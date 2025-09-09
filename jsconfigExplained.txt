@@ -1,8 +1,0 @@
-The "include" directive exists so typedefs.js found in the utility folder is always loaded by VS Code, even if the file isn't open
-The directive is telling VS Code to load every js file that's in a subfolder of the root folder
-The need for this directive caused the creation of jsconfig.json,
-    and the creation broke multiple things about the project because it indicated that we no longer want things to be handled automatically for us;
-    More on this later
-
-"ESNext" exists so we can use Maps which normally comes with JS but we lost the ability to use them when we created jsconfig.json
-"DOM" exists so we can use performance.now() which normally comes with JS but we lost the ability to use it when we created jsconfig.json

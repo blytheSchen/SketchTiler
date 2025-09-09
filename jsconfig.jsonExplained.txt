@@ -1,0 +1,13 @@
+jsconfig.json exists so all files in the Types folder are always loaded into the project by VS Code
+This allows us to use them without having to leave them opened in a tab
+The files in the Types folder give us better typechecking and IntelliSense
+
+jsconfig.json does this with the "include" directive
+Technically, that directive is currently making it so *every* .js and .d.ts file is being loaded
+I couldn't figure out how to make it only do the ones in the Types folder
+
+Creating jsconfig.json broke multiple things around the project however
+This is because its existence meant that we no longer wanted things to be handled automatically for us
+The rest of the file exists to fix what was broken
+ - "ESNext" allows us to use Maps
+ - "DOM" allows us to use performance.now()

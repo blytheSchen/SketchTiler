@@ -1,0 +1,17 @@
+#page {
+  display: flex;
+}
+
+#sketchpad {
+  position: relative;
+}
+
+#sketchpad > canvas {
+  position: absolute;
+  cursor: none;
+}
+
+#export-buttons {
+  position: relative;
+  float: right;
+}
