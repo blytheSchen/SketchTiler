@@ -5,6 +5,7 @@ import IMAGES from "../2_WFC/2_Input/images.js";
 import generateHouse from "../3_Generators/generateHouse.js";
 import generateForest from "../3_Generators/generateForest.js";
 import generateFence from "../3_Generators/generateFence.js";
+import generatePaths from "../3_Generators/generatePaths.js";
 import { Regions } from "../1_Sketchpad/1_Classes/regions.js";
 import { exportSketch } from "../1_Sketchpad/sketchpad.js";
 import generateLayout from "../3_Generators/generateLayout.js";
@@ -59,7 +60,10 @@ export default class Autotiler extends Phaser.Scene {
       const result = this.generate(this.regions);
 
       if(result){
-        this.displayMap(this.structsMap, result, "tilemap")
+        const pathLayer = generatePaths(result);
+
+        this.displayMap(this.pathsMap, pathLayer, "tilemap");
+        this.displayMap(this.structsMap, result, "tilemap");
       }
     });
 
