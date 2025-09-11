@@ -55,19 +55,7 @@ export default class Autotiler extends Phaser.Scene {
       this.structures = e.detail.structures;
       this.regions = new Regions(this.sketch, this.structures, this.tileSize).get();
       
-      //const sketchImage = Array.from({ length: tilesetInfo.HEIGHT }, () => Array(tilesetInfo.WIDTH).fill(0));  // 2D array of all 0s
-      //
-      //this.structsModel.clearSetTiles();
-      //this.generate(this.regions, sketchImage);
-      //
-      //console.log("Structures generated, attempting to generate map suggestions.");
       this.createGroundMap()
-      //this.createStructsMap_WFC();
-      //this.createStructsMap_Sketch(sketchImage);
-      //
-      //console.log("Generation Complete");
-      //this.exportMapButton.disabled = false;
-
       const result = this.generate(this.regions);
 
       if(result){
@@ -93,30 +81,6 @@ export default class Autotiler extends Phaser.Scene {
 
   // calls generators
   generate(regions, sketchImage) {
-    //const result = [];
-    //for (let structType in regions) {
-    //  for (let region of regions[structType]) {
-    //    const gen = this.generator[structType](region);
-    //    if(this.structures[structType].regionType === "box"){
-    //    console.log("Attempting to generate a structure.");
-    //
-    //      for (let y = 0; y < region.height; y++) {
-    //      for (let x = 0; x < region.width; x++) {
-    //        const dy = y + region.topLeft.y;
-    //        const dx = x + region.topLeft.x;
-    //        sketchImage[dy][dx] = gen[y][x];
-    //        this.structsModel.setTile(dx, dy, [gen[y][x]]);
-    //      }}
-    //    }
-    //    if(this.structures[structType].regionType === "trace"){
-    //    // TODO: implement trace region placements
-    //
-    //    }
-    ////
-    //  }
-    //}
-    //return result;
-
     // complete layout from user sketch data
     let layout = generateLayout(regions, 2);
 
@@ -141,33 +105,6 @@ export default class Autotiler extends Phaser.Scene {
 
     this.groundImage = image;   // for exports
   }
-/*
-  createStructsMap_WFC() {
-    const image = this.structsModel.generate(tilesetInfo.WIDTH, tilesetInfo.HEIGHT, 10, true, false);
-    if (!image) throw new Error ("Contradiction created");
-
-    if (this.structsMap_WFC) this.structsMap_WFC.destroy();
-    this.structsMap_WFC = this.make.tilemap({
-      data: image,
-      tileWidth: this.tileSize,
-      tileHeight: this.tileSize
-    });
-    this.suggestionsLayer = this.structsMap_WFC.createLayer(0, this.tileset, 0, 0);
-    this.suggestionsLayer.setAlpha(SUGGESTED_TILE_ALPHA);
-
-    this.exportImage = image; // for exports
-  }
-
-  createStructsMap_Sketch(data) {
-    if (this.structsMap_Sketch) this.structsMap_Sketch.destroy();
-    this.structsMap_Sketch = this.make.tilemap({
-      data: data,
-      tileWidth: this.tileSize,
-      tileHeight: this.tileSize
-    });
-    this.structsMap_Sketch.createLayer(0, this.tileset, 0, 0);
-  }
-*/
 
   /**
    * Display a 2D tiles array as a Phaser Tilemap.

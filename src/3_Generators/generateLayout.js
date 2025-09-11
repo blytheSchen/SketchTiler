@@ -20,11 +20,9 @@ export default function generateLayout(regions, minStructreSize) {
             placeStructureInLayout(type.toLowerCase(), box, model);
         }
     }
-    console.log(model)
     
     // generate layout
     const map = model.generate(tilesetInfo.WIDTH, tilesetInfo.HEIGHT, 10, false, false);
-    console.log(map)
 
     if (!map){ 
         console.error("Contradiction created");
