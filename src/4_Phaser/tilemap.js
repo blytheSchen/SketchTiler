@@ -44,7 +44,21 @@ const TILEMAP = {
       RIGHT: [32],
 
       FILL: [2]
-    }
+    },
+
+    fence: {
+      TOP_LEFT: [8],
+      TOP_RIGHT: [13],
+      BOTTOM_LEFT: [23],
+      BOTTOM_RIGHT: [18],
+
+      TOP: [28],
+      BOTTOM: [38],
+      LEFT: [43],
+      RIGHT: [33],
+
+      FILL: [3]
+    },
   }
 };
 export default TILEMAP;

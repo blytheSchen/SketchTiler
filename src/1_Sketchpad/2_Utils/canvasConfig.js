@@ -4,7 +4,7 @@ export const conf = {
     structures: {       // definitions for all structure types the user can draw
         "House" : { color: '#f54242', regionType: "box"   },
         "Forest": { color: '#009632', regionType: "box"   },
-        "Fence" : { color: '#f5c842', regionType: "trace" },
-        "Path"  : { color: '#8000ff', regionType: "trace" },
+        "Fence" : { color: '#4263f5ff', regionType: "box" },
+        "Path"  : { color: '#ffae00ff', regionType: "trace" },
     }
 }
