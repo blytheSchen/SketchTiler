@@ -1,5 +1,7 @@
 import TILEMAP from "../4_Phaser/TILEMAP.js";
 
+const tinytown = TILEMAP["tiny_town"];
+
 /**
  * @param {Point[]} stroke
  * @returns {BoundingBox}
@@ -29,5 +31,5 @@ export default function getBoundingBox(stroke) {
  * @returns {number}
  */
 function canvasToTilemapCoords(coord) {
-  return Math.floor(coord / TILEMAP.TILE_WIDTH);
+  return Math.floor(coord / tinytown.TILE_WIDTH);
 }

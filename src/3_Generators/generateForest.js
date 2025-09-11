@@ -3,7 +3,7 @@ import IMAGES from "../2_WFC/2_Input/IMAGES.js";
 import TILEMAP from "../4_Phaser/TILEMAP.js";
 
 const model = new WFCModel().learn(IMAGES.FORESTS, 2);
-console.log(model)
+const tinytown = TILEMAP["tiny_town"];
 
 /**
  * @param {BoundingBox} boundingBox
@@ -15,13 +15,13 @@ export default function generateForest(boundingBox) {
   // make a void border around the bounding box
   // this will ensure our generated forest is contained within the bounding box
   for(let i = 0; i < boundingBox.width + 2; i++){
-    model.setTile(i, 0, TILEMAP.VOID);                        // top border
-    model.setTile(i, boundingBox.height + 1, TILEMAP.VOID);   // bottom border
+    model.setTile(i, 0, tinytown.VOID);                        // top border
+    model.setTile(i, boundingBox.height + 1, tinytown.VOID);   // bottom border
   }
 
   for(let i = 0; i < boundingBox.height + 2; i++){
-    model.setTile(0, i, TILEMAP.VOID);                        // left border
-    model.setTile(boundingBox.width + 1, i, TILEMAP.VOID);    // right border
+    model.setTile(0, i, tinytown.VOID);                        // left border
+    model.setTile(boundingBox.width + 1, i, tinytown.VOID);    // right border
   }
 
   const forest = model.generate(boundingBox.width + 2, boundingBox.height + 2, 10, false, false);

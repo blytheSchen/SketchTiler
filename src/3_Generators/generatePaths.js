@@ -3,6 +3,7 @@ import IMAGES from "../2_WFC/2_Input/images.js";
 import TILEMAP from "../4_Phaser/TILEMAP.js";
 
 const model = new WFCModel().learn(IMAGES.GROUND, 2);
+const tinytown = TILEMAP["tiny_town"];
 
 /**
  * @param {BoundingBox} boundingBox

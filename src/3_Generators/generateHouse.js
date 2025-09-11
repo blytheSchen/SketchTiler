@@ -3,6 +3,8 @@ import IMAGES from "../2_WFC/2_Input/IMAGES.js";
 import TILEMAP from "../4_Phaser/TILEMAP.js";
 
 const model = new WFCModel().learn(IMAGES.HOUSES, 2);
+const tinytown = TILEMAP["tiny_town"];
+console.log(tinytown)
 
 /**
  * @param {BoundingBox} boundingBox
@@ -12,10 +14,10 @@ export default function generateHouse(boundingBox) {
   const { width, height } = boundingBox;
 
   model.clearSetTiles();
-  model.setTile(0, 0, TILEMAP.HOUSE_TOP_LEFT_TILES);
-  model.setTile(width-1, 0, TILEMAP.HOUSE_TOP_RIGHT_TILES);
-  model.setTile(0, height-1, TILEMAP.HOUSE_BOTTOM_LEFT_TILES);
-  model.setTile(width-1, height-1, TILEMAP.HOUSE_BOTTOM_RIGHT_TILES);
+  model.setTile(0, 0, tinytown.HOUSE_TOP_LEFT_TILES);
+  model.setTile(width-1, 0, tinytown.HOUSE_TOP_RIGHT_TILES);
+  model.setTile(0, height-1, tinytown.HOUSE_BOTTOM_LEFT_TILES);
+  model.setTile(width-1, height-1, tinytown.HOUSE_BOTTOM_RIGHT_TILES);
   setDoorRandomlyAtBottom(width, height);
 
   const house = model.generate(width, height, 10, false, false);
@@ -30,13 +32,13 @@ function setDoorRandomlyAtBottom(width, height) {
   const x = randIntInRange(1, width-1);
 
   if (width === 3) {
-    model.setTile(x, height-1, TILEMAP.HOUSE_DOOR_TILES);
+    model.setTile(x, height-1, tinytown.HOUSE_DOOR_TILES);
   } else {
     if (x === width-2) {
-      model.setTile(x, height-1, [...TILEMAP.HOUSE_DOOR_TILES, ...TILEMAP.HOUSE_DOUBLE_DOOR_RIGHT_TILES]);
+      model.setTile(x, height-1, [...tinytown.HOUSE_DOOR_TILES, ...tinytown.HOUSE_DOUBLE_DOOR_RIGHT_TILES]);
     }
     else {
-      model.setTile(x, height-1, [...TILEMAP.HOUSE_DOOR_TILES, ...TILEMAP.HOUSE_DOUBLE_DOOR_LEFT_TILES, ...TILEMAP.HOUSE_DOUBLE_DOOR_RIGHT_TILES]);
+      model.setTile(x, height-1, [...tinytown.HOUSE_DOOR_TILES, ...tinytown.HOUSE_DOUBLE_DOOR_LEFT_TILES, ...tinytown.HOUSE_DOUBLE_DOOR_RIGHT_TILES]);
     }
   }
 }

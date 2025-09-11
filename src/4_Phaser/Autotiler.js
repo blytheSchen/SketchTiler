@@ -1,13 +1,19 @@
 import Phaser from "../../lib/phaserModule.js";
-import TILEMAP from "./TILEMAP.js";
-import WFCModel from "../2_WFC/1_Model/WFCModel.js";
-import IMAGES from "../2_WFC/2_Input/IMAGES.js";
+import TILEMAP from "./tilemap.js";
+import WFCModel from "../2_WFC/1_Model/wfcModel.js";
+import IMAGES from "../2_WFC/2_Input/images.js";
 import generateHouse from "../3_Generators/generateHouse.js";
 import generateForest from "../3_Generators/generateForest.js";
 import { Regions } from "../1_Sketchpad/1_Classes/regions.js";
 import { exportSketch } from "../1_Sketchpad/sketchpad.js";
+import generateLayout from "../3_Generators/generateLayout.js";
+
+// hide demo elements
+document.getElementById("wfc-demo").classList.add("hidden");
+document.getElementById("pattern-panel").classList.add("hidden");
 
 const SUGGESTED_TILE_ALPHA = 0.5;  // must be between 0 and 1
+const tilesetInfo = TILEMAP["tiny_town"];
 
 export default class Autotiler extends Phaser.Scene {
   constructor() {
@@ -21,7 +27,7 @@ export default class Autotiler extends Phaser.Scene {
   }
 
   create() {
-    this.multiLayerMap = this.add.tilemap("tinyTownMap", TILEMAP.TILE_WIDTH, TILEMAP.TILE_WIDTH, 40, 25);
+    this.multiLayerMap = this.add.tilemap("tinyTownMap", tilesetInfo.TILE_WIDTH, tilesetInfo.TILE_WIDTH, 40, 25);
     this.tileset = this.multiLayerMap.addTilesetImage("kenney-tiny-town", "tilemap");
 
     this.groundModel = new WFCModel().learn(IMAGES.GROUND, 2);
@@ -42,9 +48,9 @@ export default class Autotiler extends Phaser.Scene {
     window.addEventListener("generate", (e) => {
       this.sketch = e.detail.sketch;
       this.structures = e.detail.structures;
-      this.regions = new Regions(this.sketch, this.structures, TILEMAP.TILE_WIDTH).get();
+      this.regions = new Regions(this.sketch, this.structures, tilesetInfo.TILE_WIDTH).get();
 
-      const sketchImage = Array.from({ length: TILEMAP.HEIGHT }, () => Array(TILEMAP.WIDTH).fill(0));  // 2D array of all 0s
+      const sketchImage = Array.from({ length: tilesetInfo.HEIGHT }, () => Array(tilesetInfo.WIDTH).fill(0));  // 2D array of all 0s
       
       this.structsModel.clearSetTiles();
       this.generate(this.regions, sketchImage);
@@ -102,14 +108,14 @@ export default class Autotiler extends Phaser.Scene {
   }
 
   createGroundMap() {
-    const image = this.groundModel.generate(TILEMAP.WIDTH, TILEMAP.HEIGHT, 10, false, false);
+    const image = this.groundModel.generate(tilesetInfo.WIDTH, tilesetInfo.HEIGHT, 10, false, false);
     if (!image) throw new Error("Contradiction created");
     
     if (this.groundMap) this.groundMap.destroy();
     this.groundMap = this.make.tilemap({
       data: image,
-      tileWidth: TILEMAP.TILE_WIDTH,
-      tileHeight: TILEMAP.TILE_WIDTH
+      tileWidth: tilesetInfo.TILE_WIDTH,
+      tileHeight: tilesetInfo.TILE_WIDTH
     });
     this.groundMap.createLayer(0, this.tileset, 0, 0);
 
@@ -117,14 +123,14 @@ export default class Autotiler extends Phaser.Scene {
   }
 
   createStructsMap_WFC() {
-    const image = this.structsModel.generate(TILEMAP.WIDTH, TILEMAP.HEIGHT, 10, true, false);
+    const image = this.structsModel.generate(tilesetInfo.WIDTH, tilesetInfo.HEIGHT, 10, true, false);
     if (!image) throw new Error ("Contradiction created");
 
     if (this.structsMap_WFC) this.structsMap_WFC.destroy();
     this.structsMap_WFC = this.make.tilemap({
       data: image,
-      tileWidth: TILEMAP.TILE_WIDTH,
-      tileHeight: TILEMAP.TILE_WIDTH
+      tileWidth: tilesetInfo.TILE_WIDTH,
+      tileHeight: tilesetInfo.TILE_WIDTH
     });
     this.suggestionsLayer = this.structsMap_WFC.createLayer(0, this.tileset, 0, 0);
     this.suggestionsLayer.setAlpha(SUGGESTED_TILE_ALPHA);
@@ -136,8 +142,8 @@ export default class Autotiler extends Phaser.Scene {
     if (this.structsMap_Sketch) this.structsMap_Sketch.destroy();
     this.structsMap_Sketch = this.make.tilemap({
       data: data,
-      tileWidth: TILEMAP.TILE_WIDTH,
-      tileHeight: TILEMAP.TILE_WIDTH
+      tileWidth: tilesetInfo.TILE_WIDTH,
+      tileHeight: tilesetInfo.TILE_WIDTH
     });
     this.structsMap_Sketch.createLayer(0, this.tileset, 0, 0);
   }

@@ -1,4 +1,4 @@
-const STRUCTURE_TYPES = {
+const STRUCTURE_TILES = {
     "tiny_town": {
         fence: {
             regionType: "box",
@@ -82,4 +82,4 @@ const STRUCTURE_TYPES = {
    }
 }
 
-export default STRUCTURE_TYPES;
+export default STRUCTURE_TILES;
