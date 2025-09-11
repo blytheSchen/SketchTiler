@@ -18,7 +18,33 @@ const TILEMAP = {
     FENCE_BOTTOM_RIGHT: [71],
   },
   "color_tiles": {
-    
+    house: {
+      TOP_LEFT: [6],
+      TOP_RIGHT: [11],
+      BOTTOM_LEFT: [21],
+      BOTTOM_RIGHT: [16],
+
+      TOP: [26],
+      BOTTOM: [36],
+      LEFT: [41],
+      RIGHT: [31],
+
+      FILL: [1]
+    },
+
+    forest: {
+      TOP_LEFT: [7],
+      TOP_RIGHT: [12],
+      BOTTOM_LEFT: [22],
+      BOTTOM_RIGHT: [17],
+
+      TOP: [27],
+      BOTTOM: [37],
+      LEFT: [42],
+      RIGHT: [32],
+
+      FILL: [2]
+    }
   }
 };
 export default TILEMAP;

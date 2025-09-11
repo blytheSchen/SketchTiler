@@ -4,7 +4,6 @@ import TILEMAP from "../4_Phaser/TILEMAP.js";
 
 const model = new WFCModel().learn(IMAGES.HOUSES, 2);
 const tinytown = TILEMAP["tiny_town"];
-console.log(tinytown)
 
 /**
  * @param {BoundingBox} boundingBox
