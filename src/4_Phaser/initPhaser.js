@@ -8,7 +8,7 @@ import Autotiler from "./Autotiler.js";
 // import HouseDataMiner from "../5_Utility/HouseDataMiner.js";
 // import HouseDataMiner2 from "../5_Utility/HouseDataMiner2.js";
 // import TilemapDataMiner from "../5_Utility/tilemapDataMiner.js";
-// import FenceDataMiner from "../5_Utility/FenceDataMiner.js";
+// import DataMiner from "../5_Utility/DataMiner.js";
 
 const tilesetInfo = TILEMAP["tiny_town"];
 

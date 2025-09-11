@@ -1,20 +1,20 @@
-// Used to extract the tile ID matrices from a fence tilemap's layers.
+// Used to extract the tile ID matrices from a tilemap's layers.
 
 import Phaser from "../../lib/phaserModule.js";
 
 
-
 //====================================================================================================
 //  ENTER DATA HERE:
-const firstFence = 1; // inclusive
-const lastFence = 1; // inclusive
+const key = "path";
+const first = 1; // inclusive
+const last = 3; // inclusive
 //====================================================================================================
 
 
 
-export default class FenceDataMiner extends Phaser.Scene {
+export default class DataMiner extends Phaser.Scene {
   constructor() {
-    super("FenceDataMinerScene");
+    super("DataMinerScene");
   }
 
   create()
@@ -29,18 +29,18 @@ export default class FenceDataMiner extends Phaser.Scene {
 
     let str = "[\n";
 
-    for (let i = firstFence; i <= lastFence; i++) {
-      const response = await fetch(`../../assets/fences/fence${i}.tmj`);
-      if (!response.ok) throw new Error(`There was an error with fetching fence${i}.tmj.`);
+    for (let i = first; i <= last; i++) {
+      const response = await fetch(`../../assets/${key}s/${key}${i}.tmj`);
+      if (!response.ok) throw new Error(`There was an error with fetching ${key}${i}.tmj.`);
 
       let json;
       try {
         json = await response.json();
       } catch {
-        throw new Error(`There is a problem with the contents of fence${i}.tmj.`);
+        throw new Error(`There is a problem with the contents of ${key}${i}.tmj.`);
       }
 
-      str += `\t// fence ${i}\n`;
+      str += `\t// ${key} ${i}\n`;
 
       for (const layer of json.layers) {
         const matrix = this.createMatrixFromArray(layer.width, layer.height, layer.data);
