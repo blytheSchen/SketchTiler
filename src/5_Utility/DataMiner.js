@@ -2,7 +2,6 @@
 
 import Phaser from "../../lib/phaserModule.js";
 
-
 //====================================================================================================
 //  ENTER DATA HERE:
 const key = "path";
@@ -12,21 +11,22 @@ const last = 3; // inclusive
 
 
 
-export default class DataMiner extends Phaser.Scene {
+export default class DataMiner {
   constructor() {
-    super("DataMinerScene");
+    //super("DataMinerScene");
   }
 
   create()
   {
-    this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R).on("down", () => this.run());
-    document.getElementById("instructions").innerHTML = "Run: R";
+    //this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R).on("down", () => this.run());
+    //document.getElementById("instructions").innerHTML = "Run: R";
   }
 
   async run() {
     // learning source: https://developer.mozilla.org/en-US/docs/Learn_web_development/Core/Scripting/JSON
     // also ChatGPT
 
+    const result = [];
     let str = "[\n";
 
     for (let i = first; i <= last; i++) {
@@ -45,6 +45,9 @@ export default class DataMiner extends Phaser.Scene {
       for (const layer of json.layers) {
         const matrix = this.createMatrixFromArray(layer.width, layer.height, layer.data);
         this.addPadding(matrix);
+        this.toInt32(matrix);
+
+        result.push(matrix)
         str += this.matrixToStr(matrix, `\t// ${layer.name}`);
       }
 
@@ -54,6 +57,7 @@ export default class DataMiner extends Phaser.Scene {
     str += "];";
 
     console.log(str);
+    console.log(result)
   }
 
   createMatrixFromArray(width, height, array) {
@@ -90,13 +94,20 @@ export default class DataMiner extends Phaser.Scene {
     let str = `\t[${comment}\n`;
     
     for (const row of matrix) {
-      str += "\t\t["
+      str += "\t\tnew Int32Array(["
       for (const elem of row) str += `${elem},`;
-      str += "],\n";
+      str += "]),\n";
     }
 
     str += "\t],\n";
 
     return str;
+  }
+
+  toInt32(matrix){
+    // convert rows to Int32 arrays
+    for (let j = 0; j < matrix.length; j++) {
+      matrix[j] = new Int32Array(matrix[j]);
+    }
   }
 }

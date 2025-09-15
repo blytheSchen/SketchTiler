@@ -22,7 +22,7 @@ export default function generatePaths(structsLayer) {
 
   // generate paths
   const paths = model.generate(tinytown.WIDTH, tinytown.HEIGHT, 10, false, false);
-  console.log(paths)
+  //console.log(paths)
 
   if (!paths){ 
     console.error("Contradiction created");
