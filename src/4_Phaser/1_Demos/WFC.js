@@ -11,7 +11,6 @@ import BENCHMARK from "../../5_Utility/Benchmarking.js";
 // hide sketchpad elements
 document.getElementById("sketchpad").classList.add("hidden");
 document.getElementById("buttons").classList.add("hidden");
-document.getElementById("instructions").classList.add("hidden");
 
 export default class WFC extends Phaser.Scene {
   displayedMapID = 3;	// check assets folder to see all maps  
