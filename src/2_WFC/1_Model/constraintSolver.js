@@ -143,8 +143,8 @@ export default class ConstraintSolver {
   getCellToObservePosition(lastObservedCellPosition, weights) {
     // Uncomment the cell selection heuristic you wish to use.
 
-    //return lexical(this.waveMatrix, lastObservedCellPosition);
-    return leastShannonEntropy(this.waveMatrix, weights);
+    return lexical(this.waveMatrix, lastObservedCellPosition);
+    //return leastShannonEntropy(this.waveMatrix, weights);
   }
 
   /**
