@@ -3,8 +3,6 @@ const STRUCTURE_TILES = {
         forest: {
             regionType: "box",
             color: 2,
-            corners: [7, 12, 17, 22],
-            borders: [27, 32, 37, 42],
             tileIDs: [
                 4, 5, 7, 8, 9, 10, 11, 12,
                 16, 17, 18, 19, 20, 21, 22, 23, 24, 
@@ -16,8 +14,6 @@ const STRUCTURE_TILES = {
         fence: {
             regionType: "box",
             color: 3,
-            corners: [8, 13, 18, 23], 
-            borders: [28, 33, 38, 43],
             tileIDs: [
                 45, 46, 47, 48, 
                 57, 59, 60, 
@@ -29,8 +25,6 @@ const STRUCTURE_TILES = {
         house: {
             regionType: "box",
             color: 1,
-            corners: [6, 11, 16, 21],
-            borders: [26, 31, 36, 41],
             tileIDs: [
                 49, 50, 51, 52, 53, 54, 55, 56,
                 61, 62, 63, 64, 65, 66, 67, 68,
@@ -43,18 +37,28 @@ const STRUCTURE_TILES = {
         path: {
             regionType: "trace",
             color: 4,
-            corners: [9, 14, 19, 24],
-            borders: [29, 34, 39, 44],
             tileIDs: [
                 26, 40, 41, 42, 43, 44
             ],
         }
         */
-   },
+    },
    "color_blocks": {
         fence: {
             regionType: "box",
             color: 3,
+            corners: {
+                topleft: [8],
+                topright: [13],
+                bottomright: [18],
+                bottomleft: [23],
+            },
+            borders: {
+                top: [28],
+                right: [33],
+                bottom: [38],
+                left: [43]
+            },
             tileIDs: [
                 3, 8, 13, 18, 23, 28, 33, 38, 43
             ]
@@ -62,6 +66,18 @@ const STRUCTURE_TILES = {
         forest: {
             regionType: "box",
             color: 2,
+            corners: {
+                topleft: [7],
+                topright: [12],
+                bottomright: [17],
+                bottomleft: [22],
+            },
+            borders: {
+                top: [27],
+                right: [32],
+                bottom: [37],
+                left: [42]
+            },
             tileIDs: [
                 2, 7, 12, 17, 22, 27, 32, 37, 42
             ],
@@ -69,20 +85,45 @@ const STRUCTURE_TILES = {
         house: {
             regionType: "box",
             color: 1,
+            corners: {
+                topleft: [6],
+                topright: [11],
+                bottomright: [16],
+                bottomleft: [21],
+            },
+            borders: {
+                top: [26],
+                right: [31],
+                bottom: [36],
+                left: [41]
+            },
             tileIDs: [
                 1, 6, 11, 16, 21, 26, 31, 36, 41
             ],
-        },
+        }, 
         /*
         path: {
             regionType: "trace",
             color: 4,
+            corners: {
+                topleft: [9],
+                topright: [14],
+                bottomright: [19],
+                bottomleft: [24],
+            },
+            borders: {
+                top: [29],
+                right: [34],
+                bottom: [39],
+                left: [44]
+            },
             tileIDs: [
                 4, 9, 14, 19, 24, 29, 34, 39, 44
             ],
         }
         */
-   }
+    }
+
 }
 
 export default STRUCTURE_TILES;

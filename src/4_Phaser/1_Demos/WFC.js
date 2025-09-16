@@ -64,7 +64,7 @@ export default class WFC extends Phaser.Scene {
     this.showInputImage();
     this.setupControls();
 
-    this.learnLayout("tiny_town", 2);
+    this.learnLayout("tiny_town", "color_blocks", 2);
   }
 
   /**
@@ -110,6 +110,13 @@ export default class WFC extends Phaser.Scene {
       }
     });
 
+    this.overlay2Toggle = document.getElementById('overlay2-toggle');
+    this.overlay2Toggle.addEventListener("click", () => {
+      if(this.wfcLayout){ 
+        this.wfcLayout.setVisible(this.overlay2Toggle.checked);
+      }
+    });
+
     /* GET AVERAGE */
     document.getElementById("numRunsInput").value = 100;
     document.getElementById("numRunsInput").addEventListener("change", (e) => {
@@ -137,10 +144,10 @@ export default class WFC extends Phaser.Scene {
   /**
    * Train layout model on structure layouts.
    * 
-   * @param {string} structuresID - Key for STRUCTURE_TILES to use.
+   * @param {string} detectStructuresID - Key for STRUCTURE_TILES to use.
    * @param {number} [displayLayout=-1] - Index of layout to display, or -1 to skip.
    */
-  learnLayout(structuresID, displayLayout = -1){
+  learnLayout(detectStructuresID, placeStructuresID, displayLayout = -1){
     let layouts = []
 
     // create layouts from structure maps
@@ -148,7 +155,8 @@ export default class WFC extends Phaser.Scene {
       const mapLayout = new Layout(
         structureMap,
         this.minStructreSize, 
-        STRUCTURE_TILES[structuresID],
+        STRUCTURE_TILES[detectStructuresID],
+        STRUCTURE_TILES[placeStructuresID],
         this.preventLayoutOverlaps
       );
 
@@ -193,7 +201,8 @@ export default class WFC extends Phaser.Scene {
       let wfcLayout = new Layout(
         layoutImage,
         my.minStructreSize, 
-        STRUCTURE_TILES["color_blocks"]
+        STRUCTURE_TILES["color_blocks"],
+        STRUCTURE_TILES["color_blocks"],
       );
 
       // use generated layout to generate and place structres in a complete tilemap
@@ -204,7 +213,10 @@ export default class WFC extends Phaser.Scene {
       my.displayMap("structuresMap", tilemapImage, "tilemap");
 
       // show color block version
-      my.displayLayout(layoutImage, "colorTiles", false); // make new color blocked layer
+      my.displayLayout(layoutImage, "layoutMap", "layoutLayer", "colorTiles", false); // make new color blocked layer
+
+      // debug
+      my.displayLayout(wfcLayout.layoutMap, "wfcLayoutMap", "wfcLayout", "colorTiles", false); // make new color blocked layer
 
       return {
         layoutTiles: my.layoutModel.performanceProfile,
@@ -293,27 +305,27 @@ export default class WFC extends Phaser.Scene {
    * @param {string} tilesetName - Tileset to use for color tiles.
    * @param {boolean} [vis=true] - Whether to show the overlay immediately.
    */
-  displayLayout(layoutMap, tilesetName, vis = true){
-    if(this.layoutLayer) {
-      this.layoutLayer.destroy();
-      this.layoutLayer = null;
+  displayLayout(layoutMap, mapKey, layerKey, tilesetName, vis = true){
+    if(this[layerKey]) {
+      this[layerKey].destroy();
+      this[layerKey] = null;
     }
 
-    if(this.layoutMap) {
-      this.layoutMap.removeAllLayers();
-      this.layoutMap.destroy();
-      this.layoutMap = null;
+    if(this[mapKey]) {
+      this[mapKey].removeAllLayers();
+      this[mapKey].destroy();
+      this[mapKey] = null;
     }
 
-    this.layoutMap = this.make.tilemap({
+    this[mapKey] = this.make.tilemap({
       data: layoutMap,
       tileWidth: this.tileSize,
       tileHeight: this.tileSize
     });
 
-    let tiles = this.layoutMap.addTilesetImage("colors", tilesetName);
-    this.layoutLayer = this.layoutMap.createLayer(0, tiles, 0, 0);
-    this.layoutLayer.setVisible(vis);
+    let tiles = this[mapKey].addTilesetImage("colors", tilesetName);
+    this[layerKey] = this[mapKey].createLayer(0, tiles, 0, 0);
+    this[layerKey].setVisible(vis);
 
     // allow toggling of color block overlay
     this.overlayToggle.disabled = false;
