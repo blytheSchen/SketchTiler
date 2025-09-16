@@ -198,8 +198,8 @@ export default class WFC extends Phaser.Scene {
       const tilemapImage = my.generateTilemapFromLayout(wfcLayout);
 
       // show tiled version
-      my.displayMap(my.groundMap, groundImage, "tilemap");
-      my.displayMap(my.structuresMap, tilemapImage, "tilemap");
+      my.displayMap("groundMap", groundImage, "tilemap");
+      my.displayMap("structuresMap", tilemapImage, "tilemap");
 
       // show color block version
       my.displayLayout(layoutImage, "colorTiles", false); // make new color blocked layer
@@ -265,18 +265,23 @@ export default class WFC extends Phaser.Scene {
    * @param {string} tilesetName - Tileset key loaded in Phaser.
    * @param {number} [gid=1] - Tile ID offset (firstgid).
    */
-  displayMap(map, tilesArray, tilesetName, gid = 1) {
-    if (map) map.destroy();   // destroy old version of map
+  displayMap(mapKey, tilesArray, tilesetName, gid = 1) {
+    if (this[mapKey]) {
+      // destroy old version of map
+      this[mapKey].removeAllLayers(); 
+      this[mapKey].destroy();
+      this[mapKey] = null;
+    }   
 
-    map = this.make.tilemap({ // make a new tilemap using tiles array
+    this[mapKey] = this.make.tilemap({ // make a new tilemap using tiles array
       data: tilesArray,
       tileWidth: this.tileSize,
       tileHeight: this.tileSize
     });
 
     // make a layer to make new map visible
-    let tileset = map.addTilesetImage("tileset", tilesetName, 16, 16, 0, 0, gid);
-    map.createLayer(0, tileset, 0, 0, 1);
+    let tileset = this[mapKey].addTilesetImage("tileset", tilesetName, 16, 16, 0, 0, gid);
+    this[mapKey].createLayer(0, tileset, 0, 0, 1);
   }	
 
   /**
