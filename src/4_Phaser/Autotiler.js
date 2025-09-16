@@ -86,7 +86,13 @@ export default class Autotiler extends Phaser.Scene {
   // calls generators
   generate(regions, sketchImage) {
     // complete layout from user sketch data
-    let layout = generateLayout(regions, 2);
+    let layout = generateLayout(
+      regions, 
+      "tiny_town", 
+      "color_blocks", 
+      2/*, 
+      true*/
+    );
 
     // call structure generators on each region in completed layout
     let map = this.generateTilemapFromLayout(layout);

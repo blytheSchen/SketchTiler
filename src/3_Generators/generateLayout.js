@@ -11,8 +11,8 @@ const tilesetInfo = TILEMAP["tiny_town"];
  * @param {BoundingBox} regions
  * @returns {TilemapImage}
  */
-export default function generateLayout(regions, minStructreSize) {
-    const layouts = learnLayout("tiny_town", minStructreSize);
+export default function generateLayout(regions, detectStructuresID, placeStructuresID, minStructreSize, preventOverlaps = false) {
+    const layouts = learnLayout(detectStructuresID, placeStructuresID, minStructreSize, preventOverlaps);
     const model = new WFCModel().learn(layouts, 2);
     
     for(let type in regions){
@@ -32,7 +32,10 @@ export default function generateLayout(regions, minStructreSize) {
     const layout = new Layout(
         map,
         minStructreSize, 
-        STRUCTURE_TILES["color_blocks"]
+        STRUCTURE_TILES[placeStructuresID],
+        STRUCTURE_TILES[placeStructuresID],
+        minStructreSize,
+        preventOverlaps
     );
 
     return layout;
@@ -41,9 +44,9 @@ export default function generateLayout(regions, minStructreSize) {
 /**
  * Train layout model on structure layouts.
  * 
- * @param {string} structuresID - Key for STRUCTURE_TILES to use.
+ * @param {string} detectStructuresID - Key for STRUCTURE_TILES to use.
  */
-function learnLayout(structuresID, minStructreSize){
+function learnLayout(detectStructuresID, placeStructuresID, minStructreSize, preventOverlaps){
     let layouts = []
 
     // create layouts from structure maps
@@ -51,7 +54,9 @@ function learnLayout(structuresID, minStructreSize){
         const mapLayout = new Layout(
             structureMap,
             minStructreSize, 
-            STRUCTURE_TILES[structuresID]
+            STRUCTURE_TILES[detectStructuresID],
+            STRUCTURE_TILES[placeStructuresID],
+            preventOverlaps
         );
 
         layouts.push(mapLayout.getLayoutMap());
