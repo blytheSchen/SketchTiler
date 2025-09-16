@@ -1,17 +1,5 @@
 const STRUCTURE_TILES = {
     "tiny_town": {
-        fence: {
-            regionType: "box",
-            color: 3,
-            corners: [8, 13, 18, 23], 
-            borders: [28, 33, 38, 43],
-            tileIDs: [
-                45, 46, 47, 48, 
-                57, 59, 60, 
-                69, 70, 71, 72, 
-                81, 82, 83
-            ]
-        },
         forest: {
             regionType: "box",
             color: 2,
@@ -23,6 +11,20 @@ const STRUCTURE_TILES = {
                 28, 29, 30, 31, 32, 33, 34, 35, 36,
                 107, 95
             ],
+            priority: 1
+        },
+        fence: {
+            regionType: "box",
+            color: 3,
+            corners: [8, 13, 18, 23], 
+            borders: [28, 33, 38, 43],
+            tileIDs: [
+                45, 46, 47, 48, 
+                57, 59, 60, 
+                69, 70, 71, 72, 
+                81, 82, 83
+            ],
+            priority: 3
         },
         house: {
             regionType: "box",
@@ -35,6 +37,7 @@ const STRUCTURE_TILES = {
                 73, 74, 75, 76, 77, 78, 79, 80,
                 85, 86, 87, 88, 89, 90, 91, 92
             ],
+            priority: 3
         },
         /*
         path: {

@@ -17,6 +17,7 @@ export default class WFC extends Phaser.Scene {
 
   N = 2;
   tileSize = 16;
+  preventLayoutOverlaps = true;
 
   profileLearning = false;
   printPatterns = true;
@@ -147,7 +148,8 @@ export default class WFC extends Phaser.Scene {
       const mapLayout = new Layout(
         structureMap,
         this.minStructreSize, 
-        STRUCTURE_TILES[structuresID]
+        STRUCTURE_TILES[structuresID],
+        this.preventLayoutOverlaps
       );
 
       layouts.push(mapLayout.getLayoutMap());
@@ -292,7 +294,16 @@ export default class WFC extends Phaser.Scene {
    * @param {boolean} [vis=true] - Whether to show the overlay immediately.
    */
   displayLayout(layoutMap, tilesetName, vis = true){
-    if(this.layoutMap) this.layoutMap.destroy();
+    if(this.layoutLayer) {
+      this.layoutLayer.destroy();
+      this.layoutLayer = null;
+    }
+
+    if(this.layoutMap) {
+      this.layoutMap.removeAllLayers();
+      this.layoutMap.destroy();
+      this.layoutMap = null;
+    }
 
     this.layoutMap = this.make.tilemap({
       data: layoutMap,
@@ -319,44 +330,51 @@ export default class WFC extends Phaser.Scene {
    * @param {string} tilesetName - Tileset used for drawing.
    * @param {number} [indexOffset=0] - Offset for tile indices.
    */
-  displayPatterns(patterns, tilesetName, indexOffset = 0) {
-    this.tilesetImage = this.textures.get(tilesetName).getSourceImage();
-    this.tilesetColumns = this.tilesetImage.width / this.tileSize;
+displayPatterns(patterns, tilesetName, indexOffset = 0) {
+  const panel = document.getElementById('pattern-panel');
+  
+  // dispose of canvas contexts
+  const existingCanvases = panel.querySelectorAll('canvas');
+  existingCanvases.forEach(canvas => {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height); 
+    canvas.width = 0; 
+    canvas.height = 0;
+  });
+  
+  panel.innerHTML = '';
 
-    const panel = document.getElementById('pattern-panel');
-    panel.innerHTML = ''; // clear old patterns
+  this.tilesetImage = this.textures.get(tilesetName).getSourceImage();
+  this.tilesetColumns = this.tilesetImage.width / this.tileSize;
 
-    patterns.forEach((pattern, index) => {
-      // create an offscreen canvas
-      const canvas = document.createElement('canvas');
-      canvas.width = this.N * this.tileSize;
-      canvas.height = this.N * this.tileSize;
-      const ctx = canvas.getContext('2d');
+  patterns.forEach((pattern, index) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = this.N * this.tileSize;
+    canvas.height = this.N * this.tileSize;
+    const ctx = canvas.getContext('2d');
 
-      // draw tiles 
-      pattern.forEach((row, y) => {
-        row.forEach((tileIndex, x) => {
-          tileIndex -= indexOffset;
-          const tileX = tileIndex % this.tilesetColumns; // tileset columns
-          const tileY = Math.floor(tileIndex / this.tilesetColumns);
-          ctx.drawImage(
-            this.tilesetImage, // HTMLImageElement from phaser loader
-            tileX * this.tileSize, tileY * this.tileSize, 
-            this.tileSize, this.tileSize,
-            x * this.tileSize, y * this.tileSize, 
-            this.tileSize, this.tileSize
-          );
-        });
-
-        ctx.strokeStyle = "#fff"; // white border (change as needed)
-        ctx.lineWidth = 1;
-        ctx.strokeRect(0, 0, canvas.width, canvas.height);
+    pattern.forEach((row, y) => {
+      row.forEach((tileIndex, x) => {
+        tileIndex -= indexOffset;
+        const tileX = tileIndex % this.tilesetColumns;
+        const tileY = Math.floor(tileIndex / this.tilesetColumns);
+        ctx.drawImage(
+          this.tilesetImage,
+          tileX * this.tileSize, tileY * this.tileSize, 
+          this.tileSize, this.tileSize,
+          x * this.tileSize, y * this.tileSize, 
+          this.tileSize, this.tileSize
+        );
       });
 
-      // Append to panel
-      panel.appendChild(canvas);
+      ctx.strokeStyle = "#fff";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0, 0, canvas.width, canvas.height);
     });
-  }
+
+    panel.appendChild(canvas);
+  });
+}
 
   /**
    * Clear generated maps and reset visibility to original input layers.
