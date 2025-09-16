@@ -3,6 +3,7 @@ import MAP2 from "./MAP2.js";
 import MAP3 from "./MAP3.js";
 import MAP4 from "./MAP4.js";
 import HOUSES from "./HOUSES.js";
+import FORESTS from "./FORESTS.js";
 
 /** @type {{ GROUND: TilemapImage[], STRUCTURES: TilemapImage[], HOUSES: TilemapImage[], FORESTS: TilemapImage[] }} */
 const IMAGES = {
@@ -20,7 +21,8 @@ const IMAGES = {
   ],
   HOUSES: HOUSES,
   FORESTS: [
-    ...MAP1.FORESTS
+    ...MAP1.FORESTS,
+    
   ]
 };
 export default IMAGES;
