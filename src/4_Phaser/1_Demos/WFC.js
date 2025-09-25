@@ -168,7 +168,7 @@ export default class WFC extends Phaser.Scene {
 
     // display
     if(displayLayout > 0){
-      this.displayLayout(layouts[displayLayout], "colorTiles"); // display color blocked layout
+      this.displayLayout(layouts[displayLayout], "layoutMap", "layoutLayer", "colorTiles", false); // display color blocked layout
     }
   }
 
