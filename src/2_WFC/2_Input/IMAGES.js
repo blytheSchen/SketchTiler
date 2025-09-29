@@ -22,7 +22,7 @@ const IMAGES = {
   HOUSES: HOUSES,
   FORESTS: [
     ...MAP1.FORESTS,
-    
+    FORESTS
   ]
 };
 export default IMAGES;
