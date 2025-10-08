@@ -23,9 +23,21 @@ export default class Layout{
         this.layoutMap = Array.from({ length: this.mapData.length }, () => Array(this.mapData[0].length).fill(0));
         this.worldFacts = [];
 
+        this.findStructures(this.detectStructureTypes);
+
+        // adjust disallowed overlaps
+        if(preventOverlaps)(this.overlapHandler());
+
+        // Populate layout data
+        this.initLayout();
+        this.findVoids();
+    }
+
+    findStructures(detect){
+        console.log(detect)
         // find all structures
-        for (const structureType in this.detectStructureTypes) {
-            let structureConfig = this.detectStructureTypes[structureType];
+        for (const structureType in detect) {
+            let structureConfig = detect[structureType];
 
             let s = this.getStructures(structureConfig);
             
@@ -34,11 +46,9 @@ export default class Layout{
                 this.worldFacts.push(structureFacts);
             }
         }
+    }
 
-        // adjust disallowed overlaps
-        if(preventOverlaps)(this.overlapHandler());
-
-        // Populate layout data
+    initLayout(){
         for (let structure of this.worldFacts) {
             if (structure.trace) {
                 for (let { x, y } of structure.trace) {
@@ -75,6 +85,13 @@ export default class Layout{
                 }
             }
         }
+    }
+
+    findVoids(){
+        // kind of a second layout-parsing pass
+        // look at this.layoutMap and look for Nothing (0)
+        // split voids into rectangles without overlapping
+        console.log(this.layoutMap)
     }
 
     getWorldFacts() {

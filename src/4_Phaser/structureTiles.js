@@ -42,6 +42,21 @@ const STRUCTURE_TILES = {
             ],
         }
         */
+       /*
+        empty: {
+            regionType: "box",
+            color: 0,
+            tileIDs: [
+                -1, 0,
+                1, 2, 3,
+                13, 14, 15,
+                25, 26, 27,
+                37, 38, 39,
+                // TEMP: path tiles
+                //40, 41, 42, 43, 44
+            ]
+        }
+        */
     },
    "color_blocks": {
         fence: {
@@ -122,6 +137,25 @@ const STRUCTURE_TILES = {
             ],
         }
         */
+       void: {
+            regionType: "box",
+            color: 0,
+            corners: {
+                topleft: [5],
+                topright: [10],
+                bottomright: [15],
+                bottomleft: [20],
+            },
+            borders: {
+                top: [25],
+                right: [30],
+                bottom: [35],
+                left: [40]
+            },
+            tileIDs: [
+                5, 10, 15, 20, 25, 30, 35, 40
+            ],
+        }
     }
 
 }
