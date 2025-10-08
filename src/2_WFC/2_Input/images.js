@@ -5,6 +5,7 @@ import MAP4 from "./map4.js";
 import HOUSES from "./houses.js";
 import FENCES from "./fences.js";
 import PATHS from "./paths.js";
+import FORESTS from "./FORESTS.js";
 
 /** @type {{ GROUND: TilemapImage[], STRUCTURES: TilemapImage[], HOUSES: TilemapImage[], FORESTS: TilemapImage[] }} */
 const IMAGES = {
@@ -22,7 +23,8 @@ const IMAGES = {
   ],
   HOUSES: HOUSES,
   FORESTS: [
-    ...MAP1.FORESTS
+    ...MAP1.FORESTS,
+    FORESTS
   ],
   FENCES: [...FENCES],
   PATHS: [...PATHS]
