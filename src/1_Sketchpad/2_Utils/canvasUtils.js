@@ -67,3 +67,20 @@ export function showDebugText(ctx, displayList){
 		ctx.fillText(line.structure, line.points[0].x, line.points[0].y)
 	}
 }
+
+/**
+ * Conerts screen corrds from mouse events into page's coords
+ * 
+ * @param {number} screenX - x coord from canvas
+ * @param {number} screenY - y coords from canvas
+ * @param {number} panX - current horizaontal offset
+ * @param {number} panY - current vertical offset
+ * @param {number} scale - current zoom scale
+ * @returns {{x: number, y: number}} page's coords
+ */
+
+export function screenToPage(screenX, screenY, panX, panY, scale){
+	const pageX = (screenX - panX) / scale;
+	const pageY = (screenY - panY) / scale;
+	return {x: pageX, y: pageY};
+}

@@ -13,7 +13,7 @@
 import { LineDisplayble, MouseDisplayable } from "./1_Classes/displayables.js";
 import { WorkingLine } from "./1_Classes/line.js";
 import { conf } from "./2_Utils/canvasConfig.js";
-import { normalizeStrokes, inCanvasBounds, showDebugText } from "./2_Utils/canvasUtils.js"
+import { normalizeStrokes, inCanvasBounds, showDebugText, screenToPage } from "./2_Utils/canvasUtils.js"
 import { undo, redo, getSnapshot } from "./2_Utils/canvasHistory.js"
 
 // Canvas setup
@@ -38,6 +38,11 @@ let mouseObject = new MouseDisplayable({
 
 let displayList = [];     // Displayed strokes currently on canvas.
 let redoDisplayList = []; // Strokes removed via undo, recorded for redo support
+
+//the zoom scale and offset
+let scale = 1.0;
+let panX = 0;
+let panY = 0;
 
 let undoStack = []; // Snapshots of canvas state for undo operations
 let redoStack = []; // Snapshots of canvas state for redo operations
@@ -64,21 +69,40 @@ document.getElementById("house-button").click();
 const changeDraw = new Event("drawing-changed"); 
 sketchCanvas.addEventListener("drawing-changed", () => {
 	ctx.clearRect(0, 0, sketchCanvas.width, sketchCanvas.height);
+
+	//adding the scle and pan from the zoom
+	ctx.save();
+	ctx.translate(panX, panY);
+	ctx.scale(scale, scale);
+
+
 	for (const d of displayList) 
 		d.display(ctx);
+
+	//returning the default 
+	ctx.restore();
 });
 
 // Custom event for updating the mouse tool position.
 const movedTool = new Event("tool-moved");
 sketchCanvas.addEventListener("tool-moved", () => {
 	ctx.clearRect(0, 0, sketchCanvas.width, sketchCanvas.height);
+
+	ctx.save();
+	ctx.translate(panX, panY);
+	ctx.scale(scale,scale);
+
 	for (const d of displayList) 
 		d.display(ctx);
+
+	ctx.restore();
 	mouseObject.display(ctx);
 });
 
 // Start drawing a new stroke.
 sketchCanvas.addEventListener("mousedown", (ev) => {
+	//pages coords
+	const pageCoords = screenToPage(ev.offsetX, ev.offsetY, panX, panY, scale);
 	// Update cursor
 	mouseObject = new MouseDisplayable({
 		x: ev.offsetX,
@@ -88,13 +112,13 @@ sketchCanvas.addEventListener("mousedown", (ev) => {
 	}, conf.lineThickness);
 
 	// Start a stroke
-	if (inCanvasBounds(mouseObject.mouse, sketchCanvas)){ 
+	if (inCanvasBounds({x: ev.offsetX, y: ev.offsetY}, sketchCanvas)){ 
 		// save current canvas state before adding a stroke
 		undoStack.push(getSnapshot());
 
 		// update new workingLine with mouseObject settings
 		workingLine = {
-			points: [mouseObject.mouse],
+			points: [pageCoords],
 			thickness: conf.lineThickness,
 			hue: mouseObject.mouse.hue,
 			structure: activeButton,
@@ -114,6 +138,7 @@ sketchCanvas.addEventListener("mousedown", (ev) => {
 
 // Continue drawing stroke as mouse moves.
 sketchCanvas.addEventListener("mousemove", (ev) => {
+	const pageCoords = screenToPage(ev.offsetX, ev.offsetY, panX, panY, scale);
 	// Update cursor
 	mouseObject = new MouseDisplayable({
 		x: ev.offsetX,
@@ -124,11 +149,11 @@ sketchCanvas.addEventListener("mousemove", (ev) => {
 
 	// Draw a stroke (if cursor is active)
 	if (mouseObject.mouse.active) {
-		if (inCanvasBounds({ x: mouseObject.mouse.x, y: mouseObject.mouse.y }, sketchCanvas)){ 
+		if (inCanvasBounds({x: ev.offsetX, y:ev.offsetY}, sketchCanvas)){ 
 			// add new point to working line
 			workingLine.points.push({
-				x: mouseObject.mouse.x,
-				y: mouseObject.mouse.y,
+				x: pageCoords.x,
+				y: pageCoords.y,
 			});
 
 			// add stroke to canvas
@@ -181,6 +206,31 @@ sketchCanvas.addEventListener("mouseleave", (e) => {
 	}, 0);
 
 	// redraw sketch canvas to capture new cursor position
+	sketchCanvas.dispatchEvent(movedTool);
+});
+
+//zoom event listener
+sketchCanvas.addEventListener("wheel", (ev) => {
+	ev.preventDefault();
+
+	const zoomSpeed = 0.1;
+	const oldScale = scale;
+
+	//calcualtes the new scale
+	if (ev.deltaY < 0) {
+		scale += zoomSpeed;
+	} else {
+		scale = Math.max(0.1, scale - zoomSpeed);//so the scale can't go under 0
+	}
+
+	//geting the mouse position in relation to the canvas
+	const mouseX = ev.offsetX;
+	const mouseY = ev.offsetY;
+
+	//adjust the pointer to be with the mouse
+	panX = mouseX - (mouseX - panX) * (scale / oldScale);
+	panY = mouseY - (mouseY - panY) * (scale / oldScale);
+
 	sketchCanvas.dispatchEvent(movedTool);
 });
 
