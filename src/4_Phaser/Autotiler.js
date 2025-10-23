@@ -39,6 +39,10 @@ export default class Autotiler extends Phaser.Scene {
     this.groundModel = new WFCModel().learn(IMAGES.GROUND, 2);
     this.structsModel = new WFCModel().learn([...IMAGES.STRUCTURES, ...IMAGES.HOUSES], 2);
 
+    this.lassoActive = false;
+    this.lassoPoints = [];
+    this.lassoGraphics = this.add.graphics().setDepth(999);
+
     this.generator = {
       house: (region) => generateHouse({width: region.width, height: region.height}),
       path: (region) => console.log("TODO: link path generator", region),
@@ -62,8 +66,14 @@ export default class Autotiler extends Phaser.Scene {
       if(result){
         const pathLayer = generatePaths(result);
 
-        this.displayMap(this.pathsMap, pathLayer, "tilemap");
-        this.displayMap(this.structsMap, result, "tilemap");
+        const sanitized = this.convertToSignedArray(result);
+
+        this.pathsLayer = this.displayMap(this.pathsMap, pathLayer, "tilemap");
+        this.structsLayer = this.displayMap(this.structsMap, sanitized, "tilemap");
+
+        this.selectedTiles = new Set()
+        this.selectionGraphics = this.add.graphics()
+
       }
     });
 
@@ -72,6 +82,8 @@ export default class Autotiler extends Phaser.Scene {
       //console.log("Clearing sketch data");
       //this.structsModel.clearSetTiles();
       // this.exportMapButton.disabled = true;
+      this.selectedTiles.clear()
+      this.selectionGraphics.clear()
     });
 
     window.addEventListener("undoSketch", (e) => {
@@ -80,6 +92,34 @@ export default class Autotiler extends Phaser.Scene {
 
     window.addEventListener("redoSketch", (e) => {
       //console.log("TODO: implement redo functionality");
+    });
+
+    this.input.on("pointerdown", (pointer) => {
+
+      this.lassoActive = true
+      this.lassoPoints = [pointer.positionToCamera(this.cameras.main)]
+
+      const worldPoint = pointer.positionToCamera(this.cameras.main)
+      const tileXY = this.structsLayer.tilemap.worldToTileXY(worldPoint.x, worldPoint.y)
+      const tile = this.structsLayer.getTileAt(tileXY.x, tileXY.y)
+  
+      if (tile && tile.index !== -1) {
+        const key = `${tile.x},${tile.y}`
+        this.selectedTiles.add(key)
+      }
+    })
+    
+    this.input.on("pointermove", (pointer) => {
+      if (!this.lassoActive) return
+      const worldPoint = pointer.positionToCamera(this.cameras.main)
+      this.lassoPoints.push(worldPoint)
+      this.drawLasso()
+    });
+    
+    this.input.on("pointerup", () => {
+      this.lassoActive = false
+      this.selectTilesInLasso()
+      this.lassoGraphics.clear()
     });
   }
 
@@ -134,8 +174,11 @@ export default class Autotiler extends Phaser.Scene {
     });
 
     // make a layer to make new map visible
-    let tileset = map.addTilesetImage("tileset", tilesetName, 16, 16, 0, 0, gid);
-    map.createLayer(0, tileset, 0, 0, 1);
+    const tileset = map.addTilesetImage("tileset", tilesetName, 16, 16, 0, 0, gid);
+
+    //FIXED HERE
+    const layer = map.createLayer(0, tileset, 0, 0);
+    return layer
   }	
 
   async exportMap(zip){
@@ -221,4 +264,53 @@ export default class Autotiler extends Phaser.Scene {
 
     return tilemapImage;
   }
+
+  drawSelection() {
+    this.selectionGraphics.clear();
+    this.selectionGraphics.lineStyle(2, 0xffff00, 1);
+
+    for (let key of this.selectedTiles) {
+        const [x, y] = key.split(",").map(Number);
+        this.selectionGraphics.strokeRect(
+            x * this.tileSize,
+            y * this.tileSize,
+            this.tileSize,
+            this.tileSize
+        );
+    }
+  }
+
+  drawLasso() {
+    this.lassoGraphics.clear()
+    this.lassoGraphics.lineStyle(2, 0x00ffff, 1)
+    this.lassoGraphics.beginPath()
+    if (this.lassoPoints.length > 1) {
+      this.lassoGraphics.moveTo(this.lassoPoints[0].x, this.lassoPoints[0].y)
+      for (let i = 1; i < this.lassoPoints.length; i++) {
+        this.lassoGraphics.lineTo(this.lassoPoints[i].x, this.lassoPoints[i].y)
+      }
+    }
+    this.lassoGraphics.strokePath()
+  }
+
+  selectTilesInLasso() {
+    const polygon = new Phaser.Geom.Polygon(this.lassoPoints)
+    this.selectedTiles.clear()
+  
+    const mapWidth = this.structsLayer.tilemap.width
+    const mapHeight = this.structsLayer.tilemap.height
+  
+    for (let y = 0; y < mapHeight; y++) {
+      for (let x = 0; x < mapWidth; x++) {
+        const worldX = x * this.tileSize + this.tileSize / 2
+        const worldY = y * this.tileSize + this.tileSize / 2
+        if (Phaser.Geom.Polygon.Contains(polygon, worldX, worldY)) {
+          this.selectedTiles.add(`${x},${y}`)
+        }
+      }
+    }
+  
+    this.drawSelection()
+  }
+  
 }
