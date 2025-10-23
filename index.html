@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SketchTiler</title>
+    <link rel="stylesheet" href="/src/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+
+    <style>
+      :root {
+        --bg: #0b0c10;
+        --panel: #111318;
+        --muted: #8b95a7;
+        --border: #1e2230;
+        --accent: #6ee7b7;
+      }
+      html, body { height: 100%; }
+      body { background: var(--bg); color: #e5e7eb; }
+      #page { min-height: 100vh; }
+
+      /* Split layout */
+      /* Layout: exactly half and half, responsive */
+      .split {
+        display: flex;
+        flex-direction: row;
+        height: 100vh;           /* full height viewport */
+        width: 100vw;            /* full width viewport */
+        overflow: hidden;
+      }
+
+      /* Left and right panels take 50% each */
+      .split > .card-ish {
+        flex: 1 1 50%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        margin: 0;               /* remove gaps */
+        border-radius: 0;        /* cleaner split */
+        border: none;
+      }
+
+      /* Content within panels scrollable if needed */
+      .card-ish > * {
+        flex: 1 1 auto;
+        overflow-y: auto;
+      }
+
+      /* Optional: divider between panels */
+      .split > .card-ish:first-child {
+        border-right: 1px solid var(--border);
+      }
+
+
+      /* Right chat panel */
+      #chatPanel h2 { font-size: 18px; margin: 6px 0 10px; }
+      .row { display: flex; gap: 8px; align-items: center; margin: 6px 0; }
+      .row > * { flex: 1; }
+      .ctrl input[type="text"], .ctrl textarea {
+        background:#0f1117; color:#e5e7eb; border:1px solid var(--border); border-radius:10px; padding:10px;
+      }
+      #chatInput { height: 200px; width: 700px; resize: vertical; }
+      .btn { border-radius: 10px; border:1px solid var(--border); background:#0f172a; color:#e5e7eb; padding:10px 12px; }
+      .btn.primary { background:#1b253b; }
+      .btn.small { padding:6px 8px; font-size:12px; }
+      .muted { color: var(--muted); font-size: 12px; }
+      #chatPreview { background:#0f1117; border:1px solid var(--border); border-radius:10px; padding:10px; height: 260px; overflow:auto; }
+      #chatRaw { display:none; height:260px; }
+      pre, code { white-space: pre-wrap; word-break: break-word; }
+
+      /* Scroll boxes (memory/files) */
+      .scrollbox { background:#0f1117; border:1px solid var(--border); border-radius:10px; padding:8px; max-height:140px; overflow:auto; }
+      .two { display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; }
+    </style>
+
+    <!-- markdown + sanitize -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/styles/github-dark.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@highlightjs/cdn-assets@11/highlight.min.js"></script>
+  </head>
+
+  <body>
+    <div class="split">
+      <!-- LEFT: your existing app / WFC generator (unchanged markup, just wrapped) -->
+      <div class="card-ish">
+        <div id="page">
+          <div id="app">
+            <!-- SKETCHPAD -->
+            <div id="sketchpad">
+              <canvas id="grid-canvas"></canvas>
+              <canvas id="sketch-canvas"></canvas>
+            </div>
+            <!-- sketchpad buttons -->
+            <div id="buttons">
+              <button id="house-button" class="button is-danger">House</button>
+              <button id="forest-button" class="button is-success">Forest</button>
+              <button id="fence-button" class="button is-info">Fence</button>
+              <span id="normalize">
+                <input id="normalize-toggle" type="checkbox" class="onoffswitch-checkbox" checked="true"/>
+                Normalize
+              </span>
+              <button id="undo-button" class="button is-light">Undo</button>
+              <button id="redo-button" class="button is-light">Redo</button>
+              <button id="generate-button" class="button is-light">Generate</button>
+              <button id="clear-button" class="button is-light">Clear</button>
+              
+              <!-- 🟢 Circle Tool Controls -->
+              <button id="modeDraw" class="button is-primary">Draw</button>
+              <button id="modeMove" class="button is-info">Move</button>
+              <button id="modeDelete" class="button is-danger">Delete</button>
+            </div>
+
+            <!-- PHASER -->
+            <div style="display:flex; overflow:hidden; gap: 1em;">
+              <div id="phaser"></div>
+              <div id="pattern-panel"></div>
+            </div>
+
+            <!-- Annotation overlay -->
+            <canvas id="circleOverlay"
+              style="position:absolute; top:0; left:0; pointer-events:none; z-index:10;">
+            </canvas>
+
+
+            <!-- DEMOS -->
+            <div id="wfc-demo">
+              <h2 class="title is-4">Controls</h2>
+              <div class="buttons mt-3">
+                <button id="generateBtn" class="button is-primary">Generate</button>
+                <button id="clearBtn" class="button is-warning">Clear</button>
+                <span id="overlay">
+                  <input id="overlay-toggle" type="checkbox" class="onoffswitch-checkbox" disabled/>
+                  Toggle overlay
+                </span>
+                <span id="overlay2">
+                  <input id="overlay2-toggle" type="checkbox" class="onoffswitch-checkbox"/>
+                  Toggle overlay 2
+                </span>
+              </div>
+
+              <div class="field">
+                <h3 class="title is-5">Get Average Duration</h3>
+                <label class="label">Number of Runs</label>
+                <div class="control">
+                  <input id="numRunsInput" class="input" type="number" min="1" value="100">
+                </div>
+                <button id="averageBtn" class="button is-info">Generate</button>
+              </div>
+
+              <div id="progressWrapper">
+                <progress id="progressBar" class="progress is-info" value="0" max="100">0%</progress>
+              </div>
+
+              <div id="thinking-icon" class="spinner" style="display: none;"></div>
+
+              <div id="profileMessage"></div>
+            </div>
+
+            <div id="data">
+              <button id="update-input-button" class="button is-dark">[DEV] Update input</button>
+
+              <!-- EXPORTS -->
+              <div id="export-buttons">
+                <button id="export-map-button" class="button is-dark" disabled="true">Export map</button>
+                <button id="export-sketch-button" class="button is-dark" disabled="true">Export sketch</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: GPT chat panel -->
+      <aside class="card-ish" id="chatPanel">
+        <h2>SketchTiler Chat</h2>
+
+        <!-- text input -->
+        <div class="ctrl">
+          <textarea id="chatInput" placeholder="Feel free to ask anything related about the map"></textarea>
+        </div>
+
+        <!-- actions -->
+        <div class="row">
+          <input id="chatImage" type="file" accept="image/*" />
+          <button id="sendBtn" class="btn primary">Send</button>
+          <button id="sendImgBtn" class="btn">Send + Image</button>
+        </div>
+
+        <!-- preview / raw -->
+        <div class="row" style="justify-content: space-between;">
+          <div class="muted" id="chatStatus">Ready.</div>
+          <div>
+            <button id="tabPreview" class="btn small">Preview</button>
+            <button id="tabRaw" class="btn small">Raw</button>
+            <button id="copyBtn" class="btn small">Copy</button>
+          </div>
+        </div>
+
+        <div id="chatPreview"></div>
+        <textarea id="chatRaw" class="ctrl" readonly></textarea>
+
+        <!-- history panes (collapsed by default) -->
+        <h3 class="two" style="margin-top:10px;">
+          <span>Project Memory</span>
+          <button id="memToggle" class="btn small">Show all</button>
+        </h3>
+        <pre id="memlog" class="scrollbox muted">(no memory yet)</pre>
+
+        <h3 class="two">
+          <span>Attached Files</span>
+          <button id="fileToggle" class="btn small">Show all</button>
+        </h3>
+        <pre id="filelog" class="scrollbox muted">(no files yet)</pre>
+      </aside>
+    </div>
+
+    <!-- Your existing WFC app -->
+    <script type="module" src="/src/main.js"></script>
+    <!-- New chat-only module (keeps WFC isolated) -->
+    <!---script type="module" src="/src/chat-ui.js"></script--->
+  </body>
+</html>

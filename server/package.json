@@ -1,0 +1,12 @@
+{
+  "name": "sketchtiler-chat-server",
+  "type": "module",
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.57.0",
+    "sharp": "^0.33.5",
+    "uuid": "^9.0.1"
+  }
+}

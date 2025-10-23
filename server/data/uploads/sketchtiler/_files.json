@@ -1,0 +1,23 @@
+[
+  {
+    "storedName": "1758062162122-tilemap.png",
+    "originalName": "tilemap.png",
+    "size": 5392,
+    "mimetype": "image/png",
+    "uploadedAt": "2025-09-16T22:36:02.123Z"
+  },
+  {
+    "storedName": "1758062162122-Tilesheet.txt",
+    "originalName": "Tilesheet.txt",
+    "size": 238,
+    "mimetype": "text/plain",
+    "uploadedAt": "2025-09-16T22:36:02.123Z"
+  },
+  {
+    "storedName": "1758062162122-legend.json",
+    "originalName": "legend.json",
+    "size": 11100,
+    "mimetype": "application/json",
+    "uploadedAt": "2025-09-16T22:36:02.124Z"
+  }
+]

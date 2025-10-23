@@ -1,0 +1,53 @@
+#page {
+  display: flex;
+}
+
+#sketchpad {
+  position: relative;
+}
+
+#sketchpad > canvas {
+  position: absolute;
+  cursor: none;
+}
+
+#pattern-panel {
+  width: 500px;
+  height: 400px;
+  overflow-y: auto;
+  background: #222;
+  padding: 10px;
+}
+
+/* index.css */
+.hidden {
+  display: none;
+}
+
+#progressWrapper {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.spinner {
+  border: 4px solid rgba(0,0,0,0.1);
+  border-left-color: #3273dc; /* Bulma's primary blue */
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+  margin-left: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+#export-buttons {
+  position: relative;
+  float: right;
+}
+
+#profileMessage {
+  white-space: pre-line;
+}
