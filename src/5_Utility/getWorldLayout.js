@@ -34,7 +34,7 @@ export default class Layout{
     }
 
     findStructures(detect){
-        console.log(detect)
+        //console.log(detect)
         // find all structures
         for (const structureType in detect) {
             let structureConfig = detect[structureType];
@@ -91,7 +91,7 @@ export default class Layout{
         // kind of a second layout-parsing pass
         // look at this.layoutMap and look for Nothing (0)
         // split voids into rectangles without overlapping
-        console.log(this.layoutMap)
+        //console.log(this.layoutMap)
     }
 
     getWorldFacts() {

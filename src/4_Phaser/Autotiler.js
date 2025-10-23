@@ -55,7 +55,7 @@ export default class Autotiler extends Phaser.Scene {
       this.sketch = e.detail.sketch;
       this.structures = e.detail.structures;
       this.regions = new Regions(this.sketch, this.structures, this.tileSize).get();
-      
+
       this.createGroundMap()
       const result = this.generate(this.regions);
 
@@ -64,6 +64,9 @@ export default class Autotiler extends Phaser.Scene {
 
         this.displayMap(this.pathsMap, pathLayer, "tilemap");
         this.displayMap(this.structsMap, result, "tilemap");
+        // draw regions on top at full opactity
+        this.displayMap(this.userStructs, this.getUserStructs(result, this.regions), "tilemap", 1, 1);
+
       }
     });
 
@@ -124,7 +127,7 @@ export default class Autotiler extends Phaser.Scene {
    * @param {string} tilesetName - Tileset key loaded in Phaser.
    * @param {number} [gid=1] - Tile ID offset (firstgid).
    */
-  displayMap(map, tilesArray, tilesetName, gid = 1) {
+  displayMap(map, tilesArray, tilesetName, gid = 1, opacity = SUGGESTED_TILE_ALPHA) {
     if (map) map.destroy();   // destroy old version of map
 
     map = this.make.tilemap({ // make a new tilemap using tiles array
@@ -135,7 +138,8 @@ export default class Autotiler extends Phaser.Scene {
 
     // make a layer to make new map visible
     let tileset = map.addTilesetImage("tileset", tilesetName, 16, 16, 0, 0, gid);
-    map.createLayer(0, tileset, 0, 0, 1);
+    let layer = map.createLayer(0, tileset, 0, 0, 1);
+    layer.alpha = opacity;
   }	
 
   async exportMap(zip){
@@ -220,5 +224,27 @@ export default class Autotiler extends Phaser.Scene {
     }
 
     return tilemapImage;
+  }
+
+  getUserStructs(tilemap, userRegions){
+    // make an empty results array with same dims as tilemap
+    let result = Array.from({ length: tilemap.length }, () => Array(tilemap[0].length).fill(-1)); // 2D array of empty tiles
+
+    // looping through user regions, grab tiles from tilemap and put in results map
+    // userRegions = {struct_type: [boundingboxA, boundingboxB, ...], ... }
+    for(let type in userRegions){   // loops thru all drawn structs by type
+      let struct = userRegions[type];
+      for(let box of struct){       // loops thru all regions in struct type
+        // using this box, copy tiles from tilemap to result
+        for(let x = box.topLeft.x; x < box.topLeft.x + box.width; x++){
+          for(let y = box.topLeft.y; y < box.topLeft.y + box.height; y++){
+            result[y][x] = tilemap[y][x];
+          }
+        }
+      }      
+    }
+
+    // return array filled with user-drawn tiles
+    return result;
   }
 }
