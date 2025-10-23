@@ -210,6 +210,7 @@ sketchCanvas.addEventListener("mouseleave", (e) => {
 });
 
 //zoom event listener
+const zoomAmountDisplay = document.getElementById(`zoom-amount`);
 sketchCanvas.addEventListener("wheel", (ev) => {
 	ev.preventDefault();
 
@@ -223,6 +224,9 @@ sketchCanvas.addEventListener("wheel", (ev) => {
 		scale = Math.max(0.1, scale - zoomSpeed);//so the scale can't go under 0
 	}
 
+	// update what the zoom percentage display looks like based on current scale
+	zoomAmountDisplay.textContent = Math.round(scale * 100);
+
 	//geting the mouse position in relation to the canvas
 	const mouseX = ev.offsetX;
 	const mouseY = ev.offsetY;
@@ -233,6 +237,16 @@ sketchCanvas.addEventListener("wheel", (ev) => {
 
 	sketchCanvas.dispatchEvent(movedTool);
 });
+
+// Resets zoom and pan
+const zoomResetButton = document.getElementById(`zoom-reset-button`);
+zoomResetButton.onclick = () => {
+	scale = 1.0;
+	panX = 0;
+	panY = 0;
+
+	zoomAmountDisplay.textContent = 100;
+}
 
 // Clears canvas and structure display list.
 const clearButton = document.getElementById(`clear-button`);
