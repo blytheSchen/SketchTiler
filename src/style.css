@@ -51,3 +51,23 @@
 #profileMessage {
   white-space: pre-line;
 }
+
+#zoom-display {
+  position: absolute;
+  z-index: 2;
+  background-color: rgba(0, 0, 0, 0.573);
+  color: white;
+}
+
+#zoom-amount {
+  position: relative;
+  margin-left: 15px;
+  margin-top: 7px;
+  display:inline-block;
+}
+
+#zoom-reset-button {
+  position: relative;
+  z-index: 2;
+  transform: scale(0.7);
+}
