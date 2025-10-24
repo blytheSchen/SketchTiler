@@ -39,6 +39,11 @@ export default class Autotiler extends Phaser.Scene {
     this.groundModel = new WFCModel().learn(IMAGES.GROUND, 2);
     this.structsModel = new WFCModel().learn([...IMAGES.STRUCTURES, ...IMAGES.HOUSES], 2);
 
+    // make an empty results array with same dims as tilemap
+    this.userTiles = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // 2D array of empty tiles
+    this.drawnUserRegion = {};
+    this.userStructureCount = 0;
+
     this.generator = {
       house: (region) => generateHouse({width: region.width, height: region.height}),
       path: (region) => console.log("TODO: link path generator", region),
@@ -54,35 +59,79 @@ export default class Autotiler extends Phaser.Scene {
     window.addEventListener("generate", (e) => {
       this.sketch = e.detail.sketch;
       this.structures = e.detail.structures;
-      this.regions = new Regions(this.sketch, this.structures, this.tileSize).get();
+      this.userRegions = new Regions(this.sketch, this.structures, this.tileSize).get();
 
       this.createGroundMap()
-      const result = this.generate(this.regions);
+      const result = this.generate(this.userRegions);
 
       if(result){
+        // saves tiles generated from user sketch to an array
+        const regionCount = this.countRegions();
+        if(this.userStructureCount < regionCount){
+          this.updateUserStructArray(this.userTiles, result, this.userRegions);
+          this.userStructureCount = regionCount;
+        }
+
         const pathLayer = generatePaths(result);
 
-        this.displayMap(this.pathsMap, pathLayer, "tilemap");
-        this.displayMap(this.structsMap, result, "tilemap");
+        this.pathsDisplay = this.displayMap(this.pathsDisplay, pathLayer, "tilemap");
+        this.structsDisplay = this.displayMap(this.structsDisplay, result, "tilemap");
         // draw regions on top at full opactity
-        this.displayMap(this.userStructs, this.getUserStructs(result, this.regions), "tilemap", 1, 1);
+        this.sketchDisplay = this.displayMap(this.sketchDisplay, this.userTiles, "tilemap", 1, 1);
+
+        // TODO: STRUCTURE LOCKING
+        //    - add a locking/unlocking button or toggle
+        //        - put under tilemap ("lock all", "lock selected" <- ?)
+        //    - is it worth it to keep track of last regions so we can only add newly added ones to user tiles?
+        //        > i dont really think so, but doing so may also help with state tracking for undo/redo. 
+        //        > will leave it as-is for now, but this is something to think about when fixing up undo.redo in tile image...
+        //    - actually, definitely need to make the userTiles privvy to undo/redo!!!
 
       }
     });
 
     window.addEventListener("clearSketch", (e) => {
       //const sketchImage = Array.from({ length: tilesetInfo.HEIGHT }, () => Array(tilesetInfo.WIDTH).fill(0));  // 2D array of all 0s
-      //console.log("Clearing sketch data");
+      console.log("Clearing sketch data");
       //this.structsModel.clearSetTiles();
       // this.exportMapButton.disabled = true;
+      
+      // make an empty results array with same dims as tilemap
+      this.userTiles = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // 2D array of empty tiles
+      this.drawnUserRegion = {};
+      this.userStructureCount = 0;
+
+      if (this.sketchDisplay) {
+        this.sketchDisplay.map.destroy();   // destroy old version of map
+        this.sketchDisplay.layer.destroy();   // clear old layer
+      }
     });
 
     window.addEventListener("undoSketch", (e) => {
-      //console.log("TODO: implement undo functionality");
+      console.log("TODO: implement undo functionality");
+      // make an empty results array with same dims as tilemap
+      this.userTiles = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // 2D array of empty tiles
+      this.drawnUserRegion = {};
+      this.userStructureCount = 0;
+
+      console.log(this.sketchDisplay)
+      if (this.sketchDisplay) {
+        this.sketchDisplay.map.destroy();   // destroy old version of map
+        this.sketchDisplay.layer.destroy();   // clear old layer
+      }
     });
 
     window.addEventListener("redoSketch", (e) => {
-      //console.log("TODO: implement redo functionality");
+      console.log("TODO: implement redo functionality");
+      // make an empty results array with same dims as tilemap
+      this.userTiles = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // 2D array of empty tiles
+      this.drawnUserRegion = {};
+      this.userStructureCount = 0;
+
+      if (this.sketchDisplay) {
+        this.sketchDisplay.map.destroy();   // destroy old version of map
+        this.sketchDisplay.layer.destroy();   // clear old layer
+      }
     });
   }
 
@@ -122,24 +171,33 @@ export default class Autotiler extends Phaser.Scene {
   /**
    * Display a 2D tiles array as a Phaser Tilemap.
    * 
-   * @param {Phaser.Tilemaps.Tilemap} map - Existing tilemap (will be destroyed and remade).
+   * @param {Phaser.Tilemaps.Tilemap} display - Existing tilemap (will be destroyed and remade).
    * @param {number[][]} tilesArray - 2D array of tile IDs.
    * @param {string} tilesetName - Tileset key loaded in Phaser.
    * @param {number} [gid=1] - Tile ID offset (firstgid).
    */
-  displayMap(map, tilesArray, tilesetName, gid = 1, opacity = SUGGESTED_TILE_ALPHA) {
-    if (map) map.destroy();   // destroy old version of map
+  displayMap(display, tilesArray, tilesetName, gid = 1, opacity = SUGGESTED_TILE_ALPHA) {
+    if (display) {
+      display.map.destroy();   // destroy old version of map
+      display.layer.destroy();   // clear old layer
+    }
 
-    map = this.make.tilemap({ // make a new tilemap using tiles array
-      data: tilesArray,
-      tileWidth: this.tileSize,
-      tileHeight: this.tileSize
-    });
+    display = {
+      map: this.make.tilemap(
+        { // make a new tilemap using tiles array
+          data: tilesArray,
+          tileWidth: this.tileSize,
+          tileHeight: this.tileSize
+        }),
+      layer: null
+    };
 
     // make a layer to make new map visible
-    let tileset = map.addTilesetImage("tileset", tilesetName, 16, 16, 0, 0, gid);
-    let layer = map.createLayer(0, tileset, 0, 0, 1);
-    layer.alpha = opacity;
+    let tileset = display.map.addTilesetImage("tileset", tilesetName, 16, 16, 0, 0, gid);
+    display.layer = display.map.createLayer(0, tileset, 0, 0, 1);
+    display.layer.alpha = opacity;
+
+    return display;
   }	
 
   async exportMap(zip){
@@ -205,6 +263,22 @@ export default class Autotiler extends Phaser.Scene {
     // generate all structures in layout
     for(let structure of layout.worldFacts){
       let region = structure.boundingBox;
+      
+      // check if (a) region is user-defined (sketched) and (b) tiles have already been drawn for the region
+      // (for now, skipping generation of these regions by default -- aka user regions are auto-locked)
+      if(this.regionInRegions(region, this.userRegions) && this.regionInRegions(region, this.drawnUserRegion)){ 
+          for(let y = 0; y < region.height; y++){
+            for(let x = 0; x < region.width; x++){
+              // place generated structure tiles in tilemapImage
+              let dy = region.topLeft.y + y;
+              let dx = region.topLeft.x + x;
+              
+              tilemapImage[dy][dx] = this.userTiles[dy][dx];
+            }
+          }
+        continue;
+      }
+
       const gen = this.generator[structure.type](region);
 
       if(!gen) { // if structure generation fails, just move on
@@ -226,25 +300,55 @@ export default class Autotiler extends Phaser.Scene {
     return tilemapImage;
   }
 
-  getUserStructs(tilemap, userRegions){
-    // make an empty results array with same dims as tilemap
-    let result = Array.from({ length: tilemap.length }, () => Array(tilemap[0].length).fill(-1)); // 2D array of empty tiles
-
-    // looping through user regions, grab tiles from tilemap and put in results map
-    // userRegions = {struct_type: [boundingboxA, boundingboxB, ...], ... }
-    for(let type in userRegions){   // loops thru all drawn structs by type
-      let struct = userRegions[type];
+  updateUserStructArray(userStructArray, tilemap, regions){
+    // looping through regions array, grab tiles from tilemap and put in results map
+    // regions = {struct_type: [boundingboxA, boundingboxB, ...], ... }
+    for(let type in regions){   // loops thru all drawn structs by type
+      let struct = regions[type];
       for(let box of struct){       // loops thru all regions in struct type
         // using this box, copy tiles from tilemap to result
         for(let x = box.topLeft.x; x < box.topLeft.x + box.width; x++){
           for(let y = box.topLeft.y; y < box.topLeft.y + box.height; y++){
-            result[y][x] = tilemap[y][x];
+            // TODO: OVERLAPS???
+            userStructArray[y][x] = tilemap[y][x];
           }
         }
-      }      
+
+        if(!this.drawnUserRegion[type]) this.drawnUserRegion[type] = [];
+        this.drawnUserRegion[type].push(box);
+      }   
     }
 
     // return array filled with user-drawn tiles
-    return result;
+    // return userStructArray;
+  }
+
+  countRegions(){
+    let count = 0;
+
+    for(let type in this.userRegions){
+      count += this.userRegions[type].length;
+    }
+
+    return count;
+  }
+
+  // kinda a hacky helper function ??? ideeek
+  // TODO: (maybe) add a param to regions marking them as user or not user regions, 
+  // that way we can just check the param instead of calling this function
+  // function name is so cursed but essentially, we are checking is a single region is represented in a group of regions
+  regionInRegions(region, regionsObj){
+    for(let type in regionsObj){
+      let struct = regionsObj[type];
+
+      for(let box of struct){
+        if(box.topLeft.x === region.topLeft.x && 
+            box.width === region.width && 
+            box.height === region.height){ 
+              return true; 
+        }
+      }
+    }
+    return false;
   }
 }

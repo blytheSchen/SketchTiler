@@ -238,6 +238,12 @@ undoButton.onclick = () => {
 
 	// update canvas to reflect undo
 	sketchCanvas.dispatchEvent(changeDraw);
+
+	// update Phaser
+	const toPhaser = new CustomEvent("undoSketch", { 
+		detail: {sketch: displayList, structures: conf.structures} 
+	});
+	window.dispatchEvent(toPhaser);
 }
 
 // Redo last undone action and re-render canvas.
@@ -250,6 +256,12 @@ redoButton.onclick = () => {
 
 	// update canvas to reflect redo
 	sketchCanvas.dispatchEvent(changeDraw);
+
+	// update Phaser
+	const toPhaser = new CustomEvent("redoSketch", { 
+		detail: {sketch: displayList, structures: conf.structures} 
+	});
+	window.dispatchEvent(toPhaser);
 }
 
 /**
