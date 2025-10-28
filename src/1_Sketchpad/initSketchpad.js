@@ -37,21 +37,42 @@ export default function initSketchpad() {
  * Each grid cell has the same dimensions as a tilemap tile.
  * @param {HTMLElement} canvas
  */
-function drawGrid(canvas) {
-  const ctx = canvas.getContext("2d");
-  ctx.strokeStyle = "#DBDBDB";
-  ctx.lineWidth = 1;
 
-  for (let x = 0; x <= canvas.width; x += tilesetInfo.TILE_WIDTH) {
+export function drawGrid(canvas, scale = 1.0, panX = 0, panY = 0) {
+  const ctx = canvas.getContext("2d");
+
+  const gridWidth = tilesetInfo.WIDTH * tilesetInfo.TILE_WIDTH;
+  const gridHeight = tilesetInfo.HEIGHT * tilesetInfo.TILE_WIDTH;
+
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.setTransform(scale, 0, 0, scale, panX, panY);
+
+  ctx.fillStyle = "white";
+  ctx.fillRect(0, 0, gridWidth, gridHeight);
+
+  ctx.strokeStyle = "#DBDBDB";
+  ctx.lineWidth = 1 / scale;
+
+  for (let x = 0; x <= gridWidth; x += tilesetInfo.TILE_WIDTH) {
     ctx.beginPath();
     ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvas.height);
+    ctx.lineTo(x, gridHeight);
     ctx.stroke();
   }
-  for (let y = 0; y <= canvas.height; y += tilesetInfo.TILE_WIDTH) {
+
+  for (let y = 0; y <= gridHeight; y += tilesetInfo.TILE_WIDTH) {
     ctx.beginPath();
     ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
+    ctx.lineTo(gridWidth, y);
     ctx.stroke();
   }
+
+  ctx.restore();
 }
+

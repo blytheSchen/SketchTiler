@@ -15,6 +15,7 @@ import { WorkingLine } from "./1_Classes/line.js";
 import { conf } from "./2_Utils/canvasConfig.js";
 import { normalizeStrokes, inCanvasBounds, showDebugText, screenToPage } from "./2_Utils/canvasUtils.js"
 import { undo, redo, getSnapshot } from "./2_Utils/canvasHistory.js"
+import { drawGrid } from "./initSketchpad.js";
 
 // Canvas setup
 const sketchCanvas = document.getElementById("sketch-canvas");
@@ -211,6 +212,7 @@ sketchCanvas.addEventListener("mouseleave", (e) => {
 
 //zoom event listener
 const zoomAmountDisplay = document.getElementById(`zoom-amount`);
+const gridCanvas = document.getElementById("grid-canvas");
 sketchCanvas.addEventListener("wheel", (ev) => {
 	ev.preventDefault();
 
@@ -226,6 +228,9 @@ sketchCanvas.addEventListener("wheel", (ev) => {
 
 	// update what the zoom percentage display looks like based on current scale
 	zoomAmountDisplay.textContent = Math.round(scale * 100);
+	//update background grid
+	drawGrid(gridCanvas, scale, panX, panY);
+
 
 	//geting the mouse position in relation to the canvas
 	const mouseX = ev.offsetX;
@@ -246,6 +251,7 @@ zoomResetButton.onclick = () => {
 	panY = 0;
 
 	zoomAmountDisplay.textContent = 100;
+	drawGrid(gridCanvas, scale, panX, panY);
 }
 
 // Clears canvas and structure display list.
