@@ -186,7 +186,6 @@ sketchCanvas.addEventListener("mouseleave", (e) => {
 
 // Clears canvas and structure display list.
 const clearButton = document.getElementById(`clear-button`);
-const clearPhaser = new CustomEvent("clearSketch");	// clears phaser canvas
 clearButton.onclick = () => {
 	// push canvas snapshot to undo stack before clearing
 	undoStack.push(getSnapshot());
@@ -197,10 +196,15 @@ clearButton.onclick = () => {
 	
 	// clear canvas
 	ctx.clearRect(0, 0, sketchCanvas.width, sketchCanvas.height);
-	window.dispatchEvent(clearPhaser);		// clear phaser canvas
 	sketchCanvas.dispatchEvent(changeDraw);	// redraw sketch canvas 
 
 	exportButton.disabled = true;	
+
+	// sends sketch data to Phaser scene
+	const toPhaser = new CustomEvent("clearSketch", { 
+		detail: {sketch: displayList, structures: conf.structures} 
+	});
+	window.dispatchEvent(toPhaser);
 };
 
 // Sends sketch data to Phaser via custom event.

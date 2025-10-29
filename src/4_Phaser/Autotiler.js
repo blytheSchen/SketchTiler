@@ -67,76 +67,92 @@ export default class Autotiler extends Phaser.Scene {
       if(result){
         // saves tiles generated from user sketch to an array
         const regionCount = this.countRegions();
-        if(this.userStructureCount < regionCount){
-          this.updateUserStructArray(this.userTiles, result, this.userRegions);
-          this.userStructureCount = regionCount;
-        }
+        
+        // update user tiles for all current regions, checking what's new or changed
+        this.updateUserStructArray(this.userTiles, result, this.userRegions);
+        this.userStructureCount = regionCount;
 
         const pathLayer = generatePaths(result);
 
+        // draw suggestion layers at half opacity
         this.pathsDisplay = this.displayMap(this.pathsDisplay, pathLayer, "tilemap");
         this.structsDisplay = this.displayMap(this.structsDisplay, result, "tilemap");
-        // draw regions on top at full opactity
+        // redraw user-sketched regions on top at full opacity
         this.sketchDisplay = this.displayMap(this.sketchDisplay, this.userTiles, "tilemap", 1, 1);
 
         // TODO: STRUCTURE LOCKING
         //    - add a locking/unlocking button or toggle
         //        - put under tilemap ("lock all", "lock selected" <- ?)
-        //    - is it worth it to keep track of last regions so we can only add newly added ones to user tiles?
-        //        > i dont really think so, but doing so may also help with state tracking for undo/redo. 
-        //        > will leave it as-is for now, but this is something to think about when fixing up undo.redo in tile image...
-        //    - actually, definitely need to make the userTiles privvy to undo/redo!!!
-
       }
     });
 
     window.addEventListener("clearSketch", (e) => {
-      //const sketchImage = Array.from({ length: tilesetInfo.HEIGHT }, () => Array(tilesetInfo.WIDTH).fill(0));  // 2D array of all 0s
-      console.log("Clearing sketch data");
-      //this.structsModel.clearSetTiles();
-      // this.exportMapButton.disabled = true;
+      this.sketch = e.detail.sketch;
+      this.structures = e.detail.structures;
+      this.userRegions = new Regions(this.sketch, this.structures, this.tileSize).get();
       
       // make an empty results array with same dims as tilemap
       this.userTiles = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // 2D array of empty tiles
       this.drawnUserRegion = {};
       this.userStructureCount = 0;
-
+        
       if (this.sketchDisplay) {
-        this.sketchDisplay.map.destroy();   // destroy old version of map
+        this.sketchDisplay.map.destroy();     // destroy old version of map
         this.sketchDisplay.layer.destroy();   // clear old layer
+      }
+
+      if (this.structsDisplay) {
+        this.structsDisplay.map.destroy();    // destroy old version of map
+        this.structsDisplay.layer.destroy();  // clear old layer
       }
     });
 
     window.addEventListener("undoSketch", (e) => {
-      console.log("TODO: implement undo functionality");
-      // make an empty results array with same dims as tilemap
-      this.userTiles = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // 2D array of empty tiles
-      this.drawnUserRegion = {};
-      this.userStructureCount = 0;
+      const previousRegions = this.userRegions; // save old regions
+      
+      this.sketch = e.detail.sketch;
+      this.structures = e.detail.structures;
+      this.userRegions = new Regions(this.sketch, this.structures, this.tileSize).get();
 
-      console.log(this.sketchDisplay)
-      if (this.sketchDisplay) {
-        this.sketchDisplay.map.destroy();   // destroy old version of map
-        this.sketchDisplay.layer.destroy();   // clear old layer
+      const removedRegions = this.findRemovedRegions(previousRegions, this.userRegions);
+      
+      // clear removed regions from userTiles and drawnUserRegion
+      for (let region of removedRegions) {
+        // clear removed userTiles
+        for (let y = region.topLeft.y; y < region.topLeft.y + region.height; y++) {
+          for (let x = region.topLeft.x; x < region.topLeft.x + region.width; x++) {
+            this.userTiles[y][x] = -1; // set to empty
+          }
+        }
+        
+        // clear removed drawnUserRegions
+        if (this.drawnUserRegion[region.type]) {
+          this.drawnUserRegion[region.type] = this.drawnUserRegion[region.type].filter(
+            box => !this.regionsMatch(box, region)
+          );
+          
+          // clean up empty arrays
+          if (this.drawnUserRegion[region.type].length === 0) {
+            delete this.drawnUserRegion[region.type];
+          }
+        }
       }
+      
+      this.userStructureCount = this.countRegions();
+      
+      this.sketchDisplay = this.displayMap(this.sketchDisplay, this.userTiles, "tilemap", 1, 1);
     });
 
     window.addEventListener("redoSketch", (e) => {
-      console.log("TODO: implement redo functionality");
-      // make an empty results array with same dims as tilemap
-      this.userTiles = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // 2D array of empty tiles
-      this.drawnUserRegion = {};
-      this.userStructureCount = 0;
-
-      if (this.sketchDisplay) {
-        this.sketchDisplay.map.destroy();   // destroy old version of map
-        this.sketchDisplay.layer.destroy();   // clear old layer
-      }
+      this.sketch = e.detail.sketch;
+      this.structures = e.detail.structures;
+      this.userRegions = new Regions(this.sketch, this.structures, this.tileSize).get();
     });
   }
 
   // calls generators
   generate(regions, sketchImage) {
+    console.log(regions)
     // complete layout from user sketch data
     let layout = generateLayout(
       regions, 
@@ -266,7 +282,7 @@ export default class Autotiler extends Phaser.Scene {
       
       // check if (a) region is user-defined (sketched) and (b) tiles have already been drawn for the region
       // (for now, skipping generation of these regions by default -- aka user regions are auto-locked)
-      if(this.regionInRegions(region, this.userRegions) && this.regionInRegions(region, this.drawnUserRegion)){ 
+      if(this.regionOverlap(region, this.userRegions) && this.regionOverlap(region, this.drawnUserRegion)){ 
           for(let y = 0; y < region.height; y++){
             for(let x = 0; x < region.width; x++){
               // place generated structure tiles in tilemapImage
@@ -300,27 +316,26 @@ export default class Autotiler extends Phaser.Scene {
     return tilemapImage;
   }
 
-  updateUserStructArray(userStructArray, tilemap, regions){
+  updateUserStructArray(userStructArray, tilemap, regions, init = false){
     // looping through regions array, grab tiles from tilemap and put in results map
     // regions = {struct_type: [boundingboxA, boundingboxB, ...], ... }
-    for(let type in regions){   // loops thru all drawn structs by type
+
+    for(let type in regions){       // loops thru all drawn structs by type
       let struct = regions[type];
       for(let box of struct){       // loops thru all regions in struct type
-        // using this box, copy tiles from tilemap to result
-        for(let x = box.topLeft.x; x < box.topLeft.x + box.width; x++){
-          for(let y = box.topLeft.y; y < box.topLeft.y + box.height; y++){
-            // TODO: OVERLAPS???
-            userStructArray[y][x] = tilemap[y][x];
+        if(init || this.regionOverlap(box, this.userRegions)){
+          // using this box, copy tiles from tilemap to result
+          for(let x = box.topLeft.x; x < box.topLeft.x + box.width; x++){
+            for(let y = box.topLeft.y; y < box.topLeft.y + box.height; y++){
+              userStructArray[y][x] = tilemap[y][x];
+            }
           }
-        }
 
-        if(!this.drawnUserRegion[type]) this.drawnUserRegion[type] = [];
-        this.drawnUserRegion[type].push(box);
+          if(!this.drawnUserRegion[type]) this.drawnUserRegion[type] = [];
+          this.drawnUserRegion[type].push(box);
+        }
       }   
     }
-
-    // return array filled with user-drawn tiles
-    // return userStructArray;
   }
 
   countRegions(){
@@ -333,22 +348,64 @@ export default class Autotiler extends Phaser.Scene {
     return count;
   }
 
-  // kinda a hacky helper function ??? ideeek
-  // TODO: (maybe) add a param to regions marking them as user or not user regions, 
-  // that way we can just check the param instead of calling this function
-  // function name is so cursed but essentially, we are checking is a single region is represented in a group of regions
-  regionInRegions(region, regionsObj){
+  regionOverlap(region, regionsObj){
     for(let type in regionsObj){
       let struct = regionsObj[type];
 
       for(let box of struct){
-        if(box.topLeft.x === region.topLeft.x && 
-            box.width === region.width && 
-            box.height === region.height){ 
-              return true; 
-        }
+        const r1Right = region.topLeft.x + region.width;
+        const r1Bottom = region.topLeft.y + region.height;
+        const r2Right = box.topLeft.x + box.width;
+        const r2Bottom = box.topLeft.y + box.height;
+
+        const overlap = (
+          region.topLeft.x <= r2Right &&
+          r1Right >= box.topLeft.x &&
+          region.topLeft.y <= r2Bottom &&
+          r1Bottom >= box.topLeft.y
+        );
+
+        if (overlap) return true;
       }
     }
     return false;
+  }
+
+  findRemovedRegions(oldRegions, newRegions) {
+    const removed = [];
+    
+    for (let type in oldRegions) {
+      const oldBoxes = oldRegions[type];
+      const newBoxes = newRegions[type] || [];
+      
+      for (let oldBox of oldBoxes) {
+        const stillExists = newBoxes.some(newBox => 
+          this.regionsMatch(oldBox, newBox)
+        );
+        
+        if (!stillExists) {
+          removed.push({ ...oldBox, type });
+        }
+      }
+    }
+    
+    return removed;
+  }
+
+  regionsMatch(box1, box2) {
+    return (
+      box1.topLeft.x === box2.topLeft.x &&
+      box1.topLeft.y === box2.topLeft.y &&
+      box1.width === box2.width &&
+      box1.height === box2.height
+    );
+  }
+
+  getDrawnRegionsFromUserTiles() {
+    const drawn = {};
+    for (let type in this.userRegions) {
+      drawn[type] = [...this.userRegions[type]];
+    }
+    return drawn;
   }
 }
