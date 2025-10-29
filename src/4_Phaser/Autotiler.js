@@ -14,6 +14,13 @@ import generateLayout from "../3_Generators/generateLayout.js";
 document.getElementById("wfc-demo").classList.add("hidden");
 document.getElementById("pattern-panel").classList.add("hidden");
 
+// structure locking
+const lockToggle = document.getElementById("structure-lock");
+let lockingAll = lockToggle.checked;
+lockToggle.onclick = () => {
+  lockingAll = document.getElementById("structure-lock").checked;
+}
+
 const SUGGESTED_TILE_ALPHA = 0.5;  // must be between 0 and 1
 const tilesetInfo = TILEMAP["tiny_town"];
 
@@ -152,7 +159,6 @@ export default class Autotiler extends Phaser.Scene {
 
   // calls generators
   generate(regions, sketchImage) {
-    console.log(regions)
     // complete layout from user sketch data
     let layout = generateLayout(
       regions, 
@@ -280,19 +286,21 @@ export default class Autotiler extends Phaser.Scene {
     for(let structure of layout.worldFacts){
       let region = structure.boundingBox;
       
-      // check if (a) region is user-defined (sketched) and (b) tiles have already been drawn for the region
-      // (for now, skipping generation of these regions by default -- aka user regions are auto-locked)
-      if(this.regionOverlap(region, this.userRegions) && this.regionOverlap(region, this.drawnUserRegion)){ 
-          for(let y = 0; y < region.height; y++){
-            for(let x = 0; x < region.width; x++){
-              // place generated structure tiles in tilemapImage
-              let dy = region.topLeft.y + y;
-              let dx = region.topLeft.x + x;
-              
-              tilemapImage[dy][dx] = this.userTiles[dy][dx];
+      if(lockingAll){
+        // check if (a) region is user-defined (sketched) and (b) tiles have already been drawn for the region
+        // (for now, skipping generation of these regions by default -- aka user regions are auto-locked)
+        if(this.regionOverlap(region, this.userRegions) && this.regionOverlap(region, this.drawnUserRegion)){ 
+            for(let y = 0; y < region.height; y++){
+              for(let x = 0; x < region.width; x++){
+                // place generated structure tiles in tilemapImage
+                let dy = region.topLeft.y + y;
+                let dx = region.topLeft.x + x;
+                
+                tilemapImage[dy][dx] = this.userTiles[dy][dx];
+              }
             }
-          }
-        continue;
+          continue;
+        }
       }
 
       const gen = this.generator[structure.type](region);

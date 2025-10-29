@@ -15,6 +15,7 @@ const tilesetInfo = TILEMAP["tiny_town"];
 const dataMiner = new DataMiner();
 const updateInputButton = document.getElementById("update-input-button");
 updateInputButton.addEventListener("click", async () => dataMiner.run());
+updateInputButton.style.visibility = "hidden";
 
 export default function initPhaser() {
   window.game = new Phaser.Game({
