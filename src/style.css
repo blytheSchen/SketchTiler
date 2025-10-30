@@ -2,6 +2,10 @@
   display: flex;
 }
 
+#app {
+  position: relative;
+}
+
 #sketchpad {
   position: relative;
 }
@@ -50,4 +54,23 @@
 
 #profileMessage {
   white-space: pre-line;
+}
+
+#drawing-buttons {
+  position: absolute;
+  top: 0;
+  right: -110px;
+  padding-right: 8px;
+  padding-left: 8px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+  background-color: #CCDEDD;
+}
+
+#generate-button {
+
 }
