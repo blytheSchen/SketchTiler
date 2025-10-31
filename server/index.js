@@ -25,6 +25,30 @@ import {
   listUploadedFiles
 } from "./persist.js";
 
+import { generatePlan, generatePlanAuto } from "./planGenerator.js";
+import { validatePlan } from "./schema.js";
+import { validateAllFailuresOnly } from "./validators.js";
+import { 
+  logApiCall, 
+  logPlanExecutionStart, 
+  logPlanExecutionSuccess, 
+  logPlanExecutionFailure,
+  getValidationStats,
+  getRecentLogs
+} from "./logger.js";
+import {
+  uploadTrainingFile,
+  createFineTuningJob,
+  getJobStatus,
+  listJobs,
+  cancelJob,
+  setActiveModel,
+  getActiveModel,
+  getAllModels,
+  getModelInfo,
+  pollJobUntilComplete
+} from "./fineTuning.js";
+
 /* ---------------- App & static ---------------- */
 const app = express();
 app.use(express.json({ limit: "10mb" }));
@@ -495,6 +519,457 @@ app.post("/api/annot/upload", annotUpload.single("image"), async (req, res) => {
   } catch (e) {
     console.error("annot/upload error:", e);
     res.status(500).json({ ok: false, error: "failed to upload" });
+  }
+});
+
+/* ================ PLAN GENERATION & EXECUTION ================ */
+
+/**
+ * POST /api/plan
+ * Generate an action plan from natural language request
+ * Body: { projectId, userRequest, selection, mapMeta, stats, modelName?, maxRetries? }
+ */
+app.post("/api/plan", async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    const { 
+      projectId = "sketchtiler",
+      userRequest = "",
+      selection = {},
+      mapMeta = {},
+      stats = {},
+      modelName = null,
+      maxRetries = 3,
+    } = req.body || {};
+    
+    if (!userRequest.trim()) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: "userRequest is required" 
+      });
+    }
+    
+    // Validate required context
+    if (!selection.x !== undefined || !selection.width || !mapMeta.width) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: "selection and mapMeta are required" 
+      });
+    }
+    
+    // Generate plan
+    const result = await generatePlan(userRequest, {
+      selection,
+      mapMeta,
+      stats,
+    }, {
+      modelName,
+      maxRetries,
+      projectId,
+    });
+    
+    const duration = Date.now() - startTime;
+    logApiCall("/api/plan", duration, 200, { 
+      projectId, 
+      model: result.metadata.model,
+      attempts: result.metadata.attempts,
+    });
+    
+    res.json({
+      ok: true,
+      plan: result.plan,
+      metadata: result.metadata,
+    });
+    
+  } catch (err) {
+    const duration = Date.now() - startTime;
+    logApiCall("/api/plan", duration, 500, { error: err.message });
+    
+    console.error("POST /api/plan error:", err);
+    res.status(500).json({ 
+      ok: false, 
+      error: err.message 
+    });
+  }
+});
+
+/**
+ * POST /api/apply
+ * Validate and apply a plan to the map
+ * Body: { projectId, plan, currentMap?, dryRun? }
+ */
+app.post("/api/apply", async (req, res) => {
+  const startTime = Date.now();
+  
+  try {
+    const {
+      projectId = "sketchtiler",
+      plan = null,
+      currentMap = null,
+      dryRun = false,
+    } = req.body || {};
+    
+    if (!plan) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: "plan is required" 
+      });
+    }
+    
+    // Validate schema
+    const schemaResult = validatePlan(plan);
+    
+    if (!schemaResult.success) {
+      const errors = schemaResult.error.errors.map(e => ({
+        path: e.path.join("."),
+        message: e.message,
+      }));
+      
+      return res.status(400).json({
+        ok: false,
+        error: "Schema validation failed",
+        validationErrors: errors,
+      });
+    }
+    
+    // Run semantic validators
+    const validationErrors = validateAllFailuresOnly(schemaResult.data, {
+      mapData: currentMap,
+    });
+    
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        ok: false,
+        error: "Plan validation failed",
+        validationErrors: validationErrors.map(e => ({
+          validator: e.validator,
+          error: e.error,
+          details: e.details,
+        })),
+      });
+    }
+    
+    logPlanExecutionStart(projectId, schemaResult.data);
+    
+    // Dry run - just validate, don't apply
+    if (dryRun) {
+      const duration = Date.now() - startTime;
+      logApiCall("/api/apply", duration, 200, { projectId, dryRun: true });
+      
+      return res.json({
+        ok: true,
+        dryRun: true,
+        valid: true,
+        message: "Plan is valid and ready to apply",
+      });
+    }
+    
+    // TODO: Actual execution logic will integrate with WFC and generators
+    // For now, return a stub response indicating what would happen
+    const executionResult = {
+      success: true,
+      tilesChanged: 0, // Would be calculated by actual execution
+      actionsExecuted: plan.actions.length,
+      message: "Plan execution stub - integration with WFC pending",
+    };
+    
+    const duration = Date.now() - startTime;
+    logPlanExecutionSuccess(projectId, executionResult, duration);
+    logApiCall("/api/apply", duration, 200, { projectId });
+    
+    res.json({
+      ok: true,
+      result: executionResult,
+    });
+    
+  } catch (err) {
+    const duration = Date.now() - startTime;
+    logApiCall("/api/apply", duration, 500, { error: err.message });
+    logPlanExecutionFailure(req.body?.projectId || "sketchtiler", err);
+    
+    console.error("POST /api/apply error:", err);
+    res.status(500).json({ 
+      ok: false, 
+      error: err.message 
+    });
+  }
+});
+
+/* ================ FINE-TUNING MANAGEMENT ================ */
+
+/**
+ * POST /api/ft/upload
+ * Upload training data file
+ * Body: { filePath } - path to JSONL file
+ */
+app.post("/api/ft/upload", async (req, res) => {
+  try {
+    const { filePath } = req.body || {};
+    
+    if (!filePath) {
+      return res.status(400).json({ ok: false, error: "filePath is required" });
+    }
+    
+    const fileId = await uploadTrainingFile(filePath);
+    
+    res.json({
+      ok: true,
+      fileId,
+      message: "Training file uploaded successfully",
+    });
+    
+  } catch (err) {
+    console.error("POST /api/ft/upload error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/ft/jobs
+ * Create a new fine-tuning job
+ * Body: { trainingFileId, modelName, baseModel?, validationFileId?, hyperparameters?, suffix? }
+ */
+app.post("/api/ft/jobs", async (req, res) => {
+  try {
+    const {
+      trainingFileId,
+      modelName,
+      baseModel = "gpt-4o-mini-2024-07-18",
+      validationFileId = null,
+      hyperparameters = {},
+      suffix = null,
+    } = req.body || {};
+    
+    if (!trainingFileId || !modelName) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: "trainingFileId and modelName are required" 
+      });
+    }
+    
+    const result = await createFineTuningJob(trainingFileId, modelName, {
+      baseModel,
+      validationFileId,
+      hyperparameters,
+      suffix,
+    });
+    
+    res.json({
+      ok: true,
+      job: result,
+      message: "Fine-tuning job created successfully",
+    });
+    
+  } catch (err) {
+    console.error("POST /api/ft/jobs error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/ft/jobs/:jobId
+ * Get status of a fine-tuning job
+ */
+app.get("/api/ft/jobs/:jobId", async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const status = await getJobStatus(jobId);
+    
+    res.json({
+      ok: true,
+      job: status,
+    });
+    
+  } catch (err) {
+    console.error("GET /api/ft/jobs/:jobId error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/ft/jobs
+ * List all fine-tuning jobs
+ */
+app.get("/api/ft/jobs", async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 20;
+    const jobs = await listJobs(limit);
+    
+    res.json({
+      ok: true,
+      jobs,
+    });
+    
+  } catch (err) {
+    console.error("GET /api/ft/jobs error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/ft/jobs/:jobId/cancel
+ * Cancel a fine-tuning job
+ */
+app.post("/api/ft/jobs/:jobId/cancel", async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const result = await cancelJob(jobId);
+    
+    res.json({
+      ok: true,
+      job: result,
+      message: "Job cancelled successfully",
+    });
+    
+  } catch (err) {
+    console.error("POST /api/ft/jobs/:jobId/cancel error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/ft/models
+ * List all registered models
+ */
+app.get("/api/ft/models", (req, res) => {
+  try {
+    const models = getAllModels();
+    const activeModel = getActiveModel();
+    
+    res.json({
+      ok: true,
+      models,
+      activeModel,
+    });
+    
+  } catch (err) {
+    console.error("GET /api/ft/models error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/ft/models/:modelName
+ * Get info about a specific model
+ */
+app.get("/api/ft/models/:modelName", (req, res) => {
+  try {
+    const { modelName } = req.params;
+    const info = getModelInfo(modelName);
+    
+    if (!info) {
+      return res.status(404).json({ 
+        ok: false, 
+        error: `Model not found: ${modelName}` 
+      });
+    }
+    
+    res.json({
+      ok: true,
+      model: info,
+    });
+    
+  } catch (err) {
+    console.error("GET /api/ft/models/:modelName error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * POST /api/ft/models/active
+ * Set the active model
+ * Body: { modelName }
+ */
+app.post("/api/ft/models/active", (req, res) => {
+  try {
+    const { modelName } = req.body || {};
+    
+    if (!modelName) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: "modelName is required" 
+      });
+    }
+    
+    const result = setActiveModel(modelName);
+    
+    res.json({
+      ok: true,
+      activeModel: result.activeModel,
+      message: `Active model set to ${result.activeModel}`,
+    });
+    
+  } catch (err) {
+    console.error("POST /api/ft/models/active error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/ft/models/active
+ * Get the active model
+ */
+app.get("/api/ft/models/active", (req, res) => {
+  try {
+    const activeModel = getActiveModel();
+    const info = getModelInfo(activeModel);
+    
+    res.json({
+      ok: true,
+      activeModel,
+      modelInfo: info,
+    });
+    
+  } catch (err) {
+    console.error("GET /api/ft/models/active error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/* ================ METRICS & MONITORING ================ */
+
+/**
+ * GET /api/metrics/validation
+ * Get validation statistics
+ */
+app.get("/api/metrics/validation", (req, res) => {
+  try {
+    const days = parseInt(req.query.days) || 7;
+    const stats = getValidationStats(days);
+    
+    res.json({
+      ok: true,
+      stats,
+      period: `${days} days`,
+    });
+    
+  } catch (err) {
+    console.error("GET /api/metrics/validation error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/logs/:category
+ * Get recent logs by category
+ */
+app.get("/api/logs/:category", (req, res) => {
+  try {
+    const { category } = req.params;
+    const limit = parseInt(req.query.limit) || 100;
+    const logs = getRecentLogs(category, limit);
+    
+    res.json({
+      ok: true,
+      category,
+      count: logs.length,
+      logs,
+    });
+    
+  } catch (err) {
+    console.error("GET /api/logs/:category error:", err);
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 
