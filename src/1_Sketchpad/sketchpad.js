@@ -307,6 +307,50 @@ redoButton.onclick = () => {
 	window.dispatchEvent(toPhaser);
 }
 
+// ERASING
+function erase(region){
+	undoStack.push(getSnapshot())
+
+	for(let i = 0; i < displayList.length; i++) {
+		const stroke = displayList[i]
+		for (const point of stroke.line.points) {
+			if (pointInEraseRegion(point, region)) {
+				displayList.splice(i, 1)
+				break
+			}
+		}
+	}
+
+	redoStack = [];
+	redoDisplayList = [];
+
+	sketchCanvas.dispatchEvent(changeDraw);
+}
+
+function pointInEraseRegion(point, region) {
+	// TODO: sketchpad erasing
+
+	// rectangular erase for phaser erase
+	if (region.topLeft && region.bottomRight) {
+		return (
+			point.x >= region.topLeft.x &&
+			point.x <= region.bottomRight.x &&
+			point.y >= region.topLeft.y &&
+			point.y <= region.bottomRight.y
+		);
+	}
+	
+	return false;
+}
+
+// phaser erase event
+window.addEventListener("phaserErase", (e) => {
+	erase({
+		topLeft: e.detail.region.topLeft,
+		bottomRight: e.detail.region.bottomRight
+	});
+});
+
 /**
  * Keyboard shortcuts:
  * - Ctrl/Cmd + Z → Undo
@@ -331,7 +375,6 @@ export function getDisplayList(l) {
 	if (!l || l.toLowerCase() === "display") return displayList;
 	else if (l.toLowerCase() === "redo") return redoDisplayList;
 }
-
 
 /**
  * Overwrites the display list arrays.

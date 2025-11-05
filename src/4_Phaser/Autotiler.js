@@ -104,14 +104,30 @@ export default class Autotiler extends Phaser.Scene {
             }
 
             if(tl.x <= tx && tl.y <= ty && br.x >= tx && br.y >= ty){
-              //struct.gen = true // flag as a generated region
-
               let removed = false
               for(let region of this.lockedRegions[struct.type]){
                 if(region.topLeft.x === tl.x && region.topLeft.y === tl.y){
+                  console.log("removing", region)
+
                   // remove rect from display
                   this.lockedRectDisplay[region.index].destroy();
                   delete this.lockedRectDisplay[region.index]
+
+                  // remove from sketchpad
+                  // TODO: left off here
+                  const toSketch = new CustomEvent("phaserErase", { 
+                    detail: {
+                      type: struct.type, 
+                      region: {
+                        // convert to pixel coords and scootch them in a little
+                        // the scootch prevents the sketch->tile region conversion from growing regions
+                        topLeft: { x: tl.x * this.tileSize + 1, y: tl.y * this.tileSize + 1 },
+                        bottomRight: { x: br.x * this.tileSize - 1, y: br.y * this.tileSize - 1 }
+                      }
+                    } 
+                  });
+                	window.dispatchEvent(toSketch);
+
 
                   // remove from obj
                   this.lockedRegions[struct.type] = this.lockedRegions[struct.type].filter(
@@ -122,9 +138,9 @@ export default class Autotiler extends Phaser.Scene {
                 } 
               }
               if(!removed){
-                if(!this.userRegions[struct.type]) this.userRegions[struct.type] = []
+                if(!this.lockedRegions[struct.type]) this.lockedRegions[struct.type] = []
 
-                const index = `${struct.type} ${this.userRegions[struct.type].length}`
+                const index = `${struct.type} ${this.lockedRegions[struct.type].length}`
                 const lockRegion = {
                   index: index,
                   topLeft: tl,
@@ -132,9 +148,9 @@ export default class Autotiler extends Phaser.Scene {
                   width: w,
                   height: h
                 }
-                this.userRegions[struct.type].push(lockRegion)
+                this.lockedRegions[struct.type].push(lockRegion)
 
-                this.updateUserStructArray(this.lockedTiles, this.wfcResult, this.userRegions);
+                this.updateUserStructArray(this.lockedTiles, this.wfcResult, this.lockedRegions);
 
                 // draw rect
                 const rect = this.add.rectangle(
@@ -164,8 +180,6 @@ export default class Autotiler extends Phaser.Scene {
             }
           }
         }
-        // LEFT OFF
-        // now i need to add this to some kinda locked regions tracker. idk if i should just do userRegions
       }
     }
 
