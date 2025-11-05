@@ -49,16 +49,16 @@
           <div class="buttons mt-3">
             <button id="generateBtn" class="button is-primary">Generate</button>
             <button id="clearBtn" class="button is-warning">Clear</button>
-            <span id="overlay">
-              <input id="overlay-toggle"
+            <span id="demo-overlay">
+              <input id="demo-overlay-toggle"
                 type="checkbox" 
                 class="onoffswitch-checkbox"  
                 disabled
               />
               Toggle overlay
             </span>
-            <span id="overlay2">
-              <input id="overlay2-toggle"
+            <span id="demo-overlay2">
+              <input id="demo-overlay2-toggle"
                 type="checkbox" 
                 class="onoffswitch-checkbox"  
               />
@@ -85,11 +85,8 @@
         </div>
 
         <div id="data">
-          <!-- dev mode-->
-          <button id="update-input-button" class="button is-dark">[DEV] Update input</button>
-
           <!-- STRUCTURE LOCKING -->
-           <span id="structure_lock">
+          <span id="structure_lock">
             <input id="structure-lock"
               type="checkbox" 
               class="onoffswitch-checkbox"  
@@ -97,6 +94,18 @@
             />
             Lock structures
           </span>
+
+          <span id="overlay">
+              <input id="overlay-toggle"
+                type="checkbox" 
+                class="onoffswitch-checkbox"  
+                checked="false"
+              />
+              Show regions
+          </span>
+
+          <!-- dev mode-->
+          <button id="update-input-button" class="button is-dark">[DEV] Update input</button>
 
           <!-- EXPORTS -->
           <div id="export-buttons">

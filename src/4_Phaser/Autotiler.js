@@ -9,6 +9,7 @@ import generatePaths from "../3_Generators/generatePaths.js";
 import { Regions } from "../1_Sketchpad/1_Classes/regions.js";
 import { exportSketch } from "../1_Sketchpad/sketchpad.js";
 import generateLayout from "../3_Generators/generateLayout.js";
+import Layout from "../5_Utility/getWorldLayout.js";
 
 // hide demo elements
 document.getElementById("wfc-demo").classList.add("hidden");
@@ -33,6 +34,7 @@ export default class Autotiler extends Phaser.Scene {
     this.load.setPath("./assets/");
     this.load.image("tilemap", "tinyTown_Tilemap_Packed.png");
     this.load.tilemapTiledJSON("tinyTownMap", `maps/map1.tmj`);
+    this.load.image("colorTiles", "colorTilemap_Packed.png");
   }
 
   create() {
@@ -47,7 +49,10 @@ export default class Autotiler extends Phaser.Scene {
     this.structsModel = new WFCModel().learn([...IMAGES.STRUCTURES, ...IMAGES.HOUSES], 2);
 
     // make an empty results array with same dims as tilemap
-    this.userTiles = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // 2D array of empty tiles
+    this.lockedRegions = { house: [], path: [], fence: [], forest: []}  // TODO: temp
+    this.lockedRectDisplay = {}; // holds rects drawn around locked regions
+    this.lockedTiles = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // 2D array of empty tiles
+  
     this.drawnUserRegion = {};
     this.userStructureCount = 0;
 
@@ -63,33 +68,142 @@ export default class Autotiler extends Phaser.Scene {
     this.exportMapButton.addEventListener("click", async () => this.export("map"));
     this.exportMapButton.disabled = true;
 
+    // show overlay regions
+    this.overlayToggle = document.getElementById('overlay-toggle');
+    this.overlayToggle.onclick = () => {
+      if(this.layout){ 
+        if(!this.layoutDisplay) {
+          this.layoutDisplay = this.displayMap(this.layoutDisplay, this.layout.layoutMap, "colorTiles")
+        }
+
+        this.layoutDisplay.layer.setVisible(this.overlayToggle.checked);
+      }
+    };
+
+    // region click
+    this.canvas = document.getElementById("phaser");
+    this.canvas.onclick = (e) => {
+
+      // TODO: LEFT OFF HERE
+      // check if clicked coords are in a region
+      // if so, toggle that region's lock
+      //  - rn that would be like: add/remove from this.userRegions
+      //  - i think it would be better maybe to keep userRegions and locked regions distinct tho
+
+      if(this.layout){
+        const tx = Math.floor(e.layerX / this.tileSize)
+        const ty = Math.floor(e.layerY / this.tileSize)
+        if(this.layout.layoutMap[ty][tx] > 0) {
+          for(let struct of this.layout.worldFacts){
+            const w = struct.boundingBox.width
+            const h = struct.boundingBox.height
+            const tl = struct.boundingBox.topLeft
+            const br = {
+              x: struct.boundingBox.topLeft.x + w,
+              y: struct.boundingBox.topLeft.y + h
+            }
+
+            if(tl.x <= tx && tl.y <= ty && br.x >= tx && br.y >= ty){
+              //struct.gen = true // flag as a generated region
+
+              let removed = false
+              for(let region of this.lockedRegions[struct.type]){
+                if(region.topLeft.x === tl.x && region.topLeft.y === tl.y){
+                  // remove rect from display
+                  this.lockedRectDisplay[region.index].destroy();
+                  delete this.lockedRectDisplay[region.index]
+
+                  // remove from obj
+                  this.lockedRegions[struct.type] = this.lockedRegions[struct.type].filter(
+                    r => (r.topLeft.x !== tl.x & r.topLeft.y !== tl.y)
+                  );
+
+                  removed = true;
+                } 
+              }
+              if(!removed){
+                if(!this.userRegions[struct.type]) this.userRegions[struct.type] = []
+
+                const index = `${struct.type} ${this.userRegions[struct.type].length}`
+                const lockRegion = {
+                  index: index,
+                  topLeft: tl,
+                  bottomRight: br,
+                  width: w,
+                  height: h
+                }
+                this.userRegions[struct.type].push(lockRegion)
+
+                this.updateUserStructArray(this.lockedTiles, this.wfcResult, this.userRegions);
+
+                // draw rect
+                const rect = this.add.rectangle(
+                  tl.x * this.tileSize, tl.y * this.tileSize, 
+                  w * this.tileSize, h * this.tileSize
+                )
+                rect.setOrigin(0)
+                rect.setStrokeStyle(2, 0xffffff);
+
+                this.lockedRectDisplay[index] = rect;
+
+                // send rect to sketch canvas
+                const toSketch = new CustomEvent("mapToSketch", { 
+                  detail: {
+                    type: struct.type, 
+                    region: {
+                      // convert to pixel coords and scootch them in a little
+                      // the scootch prevents the sketch->tile region conversion from growing regions
+                      topLeft: { x: tl.x * this.tileSize + 1, y: tl.y * this.tileSize + 1 },
+                      bottomRight: { x: br.x * this.tileSize - 1, y: br.y * this.tileSize - 1 }
+                    }
+                  } 
+                });
+              	window.dispatchEvent(toSketch);
+
+              }
+            }
+          }
+        }
+        // LEFT OFF
+        // now i need to add this to some kinda locked regions tracker. idk if i should just do userRegions
+      }
+    }
+
     window.addEventListener("generate", (e) => {
       this.sketch = e.detail.sketch;
       this.structures = e.detail.structures;
       this.userRegions = new Regions(this.sketch, this.structures, this.tileSize).get();
 
-      this.createGroundMap()
-      const result = this.generate(this.userRegions);
+      this.layout = null;
+      this.layoutDisplay = null;
 
-      if(result){
+      this.createGroundMap()
+      this.wfcResult = this.generate(this.userRegions);
+
+      if(this.wfcResult){
         // saves tiles generated from user sketch to an array
         const regionCount = this.countRegions();
         
         // update user tiles for all current regions, checking what's new or changed
-        this.updateUserStructArray(this.userTiles, result, this.userRegions);
+        this.updateUserStructArray(this.lockedTiles, this.wfcResult, this.userRegions);
         this.userStructureCount = regionCount;
 
-        const pathLayer = generatePaths(result);
+        const pathLayer = generatePaths(this.wfcResult);
 
         // draw suggestion layers at half opacity
         this.pathsDisplay = this.displayMap(this.pathsDisplay, pathLayer, "tilemap");
-        this.structsDisplay = this.displayMap(this.structsDisplay, result, "tilemap");
+        this.structsDisplay = this.displayMap(this.structsDisplay, this.wfcResult, "tilemap");
         // redraw user-sketched regions on top at full opacity
-        this.sketchDisplay = this.displayMap(this.sketchDisplay, this.userTiles, "tilemap", 1, 1);
+        this.sketchDisplay = this.displayMap(this.sketchDisplay, this.lockedTiles, "tilemap", 1, 1);
 
-        // TODO: STRUCTURE LOCKING
-        //    - add a locking/unlocking button or toggle
-        //        - put under tilemap ("lock all", "lock selected" <- ?)
+        if(this.layout){ 
+          if(!this.layoutDisplay) {
+           //console.log("init layout display")
+            this.layoutDisplay = this.displayMap(this.layoutDisplay, this.layout.layoutMap, "colorTiles", 0.25)
+          }
+
+          this.layoutDisplay.layer.setVisible(this.overlayToggle.checked);
+        }
       }
     });
 
@@ -99,7 +213,7 @@ export default class Autotiler extends Phaser.Scene {
       this.userRegions = new Regions(this.sketch, this.structures, this.tileSize).get();
       
       // make an empty results array with same dims as tilemap
-      this.userTiles = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // 2D array of empty tiles
+      this.lockedTiles = Array.from({ length: this.height }, () => Array(this.width).fill(-1)); // 2D array of empty tiles
       this.drawnUserRegion = {};
       this.userStructureCount = 0;
         
@@ -112,23 +226,27 @@ export default class Autotiler extends Phaser.Scene {
         this.structsDisplay.map.destroy();    // destroy old version of map
         this.structsDisplay.layer.destroy();  // clear old layer
       }
+
+      this.layoutDisplay.layer.setVisible(false);
     });
 
     window.addEventListener("undoSketch", (e) => {
-      const previousRegions = this.userRegions; // save old regions
+      this.previousRegions = this.userRegions; // save old regions
+      this.previousLayoutDisplay = this.layout.copy();
       
       this.sketch = e.detail.sketch;
       this.structures = e.detail.structures;
       this.userRegions = new Regions(this.sketch, this.structures, this.tileSize).get();
 
-      const removedRegions = this.findRemovedRegions(previousRegions, this.userRegions);
+      this.removedRegions = this.findRemovedRegions(this.previousRegions, this.userRegions);
       
-      // clear removed regions from userTiles and drawnUserRegion
-      for (let region of removedRegions) {
-        // clear removed userTiles
+      // clear removed regions from lockedTiles and drawnUserRegion
+      for (let region of this.removedRegions) {
+        // clear removed lockedTiles 
         for (let y = region.topLeft.y; y < region.topLeft.y + region.height; y++) {
           for (let x = region.topLeft.x; x < region.topLeft.x + region.width; x++) {
-            this.userTiles[y][x] = -1; // set to empty
+            this.lockedTiles[y][x] = -1; // set to empty
+            this.layout.layoutMap[y][x] = -1; // also need to update layout map
           }
         }
         
@@ -147,20 +265,32 @@ export default class Autotiler extends Phaser.Scene {
       
       this.userStructureCount = this.countRegions();
       
-      this.sketchDisplay = this.displayMap(this.sketchDisplay, this.userTiles, "tilemap", 1, 1);
+      this.sketchDisplay = this.displayMap(this.sketchDisplay, this.lockedTiles, "tilemap", 1, 1);
+
+      this.layoutDisplay = this.displayMap(this.layoutDisplay, this.layout.layoutMap, "colorTiles")
+      this.layoutDisplay.layer.setVisible(this.overlayToggle.checked);
     });
 
     window.addEventListener("redoSketch", (e) => {
       this.sketch = e.detail.sketch;
       this.structures = e.detail.structures;
       this.userRegions = new Regions(this.sketch, this.structures, this.tileSize).get();
+
+      // TODO: layout display reflects changes to sketch canvas
+      // how to handle when the layout has changes and we want to re-place a region?
+      //    - maybe redo will only draw the user regions/locked regions?
+      //    - or just leave it as is?
+      // this.layoutDisplay = this.displayMap(this.layoutDisplay, this.layout.layoutMap, "colorTiles")
+      // this.layoutDisplay.layer.setVisible(this.overlayToggle.checked);
     });
   }
 
   // calls generators
   generate(regions, sketchImage) {
+    if(this.layout) delete this.layout
+
     // complete layout from user sketch data
-    let layout = generateLayout(
+    this.layout = generateLayout(
       regions, 
       "tiny_town", 
       "color_blocks", 
@@ -169,7 +299,7 @@ export default class Autotiler extends Phaser.Scene {
     );
 
     // call structure generators on each region in completed layout
-    let map = this.generateTilemapFromLayout(layout);
+    let map = this.generateTilemapFromLayout(this.layout);
 
     // return completed tilemap
     return map;
@@ -198,7 +328,7 @@ export default class Autotiler extends Phaser.Scene {
    * @param {string} tilesetName - Tileset key loaded in Phaser.
    * @param {number} [gid=1] - Tile ID offset (firstgid).
    */
-  displayMap(display, tilesArray, tilesetName, gid = 1, opacity = SUGGESTED_TILE_ALPHA) {
+  displayMap(display, tilesArray, tilesetName, opacity = SUGGESTED_TILE_ALPHA, gid = 1) {
     if (display) {
       display.map.destroy();   // destroy old version of map
       display.layer.destroy();   // clear old layer
@@ -296,7 +426,7 @@ export default class Autotiler extends Phaser.Scene {
                 let dy = region.topLeft.y + y;
                 let dx = region.topLeft.x + x;
                 
-                tilemapImage[dy][dx] = this.userTiles[dy][dx];
+                tilemapImage[dy][dx] = this.lockedTiles[dy][dx];
               }
             }
           continue;

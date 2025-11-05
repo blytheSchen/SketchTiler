@@ -18,6 +18,7 @@ export default class Layout{
         this.minStructureSize = minStructureSize;
         this.detectStructureTypes = detectStructureTypes;
         this.placeStructureTypes = placeStructureTypes;
+        this.preventOverlaps = preventOverlaps;
 
         // init this.layoutMap with empty tiles
         this.layoutMap = Array.from({ length: this.mapData.length }, () => Array(this.mapData[0].length).fill(0));
@@ -31,6 +32,16 @@ export default class Layout{
         // Populate layout data
         this.initLayout();
         this.findVoids();
+    }
+
+    copy(){
+        return new Layout(
+            this.mapData, 
+            this.minStructureSize, 
+            this.detectStructureTypes, 
+            this.placeStructureTypes, 
+            this.preventOverlaps
+        );
     }
 
     findStructures(detect){

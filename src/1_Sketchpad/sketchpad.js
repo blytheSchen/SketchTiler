@@ -184,6 +184,45 @@ sketchCanvas.addEventListener("mouseleave", (e) => {
 	sketchCanvas.dispatchEvent(movedTool);
 });
 
+// Receives region to be drawn from Phaser
+window.addEventListener("mapToSketch", (e) => {
+	// simulate a button press
+	const button = document.getElementById(`${e.detail.type.toLowerCase()}-button`);
+	button.click();
+
+	undoStack.push(getSnapshot());
+
+	const tl = e.detail.region.topLeft
+	const br = e.detail.region.bottomRight
+	const w = br.x - tl.x
+	const rectPoints = [
+		{ x: tl.x, y: tl.y },	// top-left
+		{ x: tl.x, y: tl.y },	// top-left again to prevent culling
+		{ x: br.x, y: tl.y },	// top-right
+		{ x: br.x, y: br.y },	// bottom-right
+		{ x: tl.x, y: br.y },	// bottom-left
+		{ x: tl.x, y: tl.y }	// close
+	];
+
+	const rectLine = {
+		points: rectPoints,
+		thickness: conf.lineThickness,
+		hue: mouseObject.mouse.hue,
+		structure: e.detail.type,
+	};
+	
+	const newDisplayable = new LineDisplayble(rectLine)
+	newDisplayable.normalized = true	// assuming since it's a region imported from phaser, it's already a rect
+
+	displayList.push(newDisplayable);
+
+	redoDisplayList = [];
+	redoStack = [];
+
+	sketchCanvas.dispatchEvent(changeDraw);
+	exportButton.disabled = false;
+})
+
 // Clears canvas and structure display list.
 const clearButton = document.getElementById(`clear-button`);
 clearButton.onclick = () => {
