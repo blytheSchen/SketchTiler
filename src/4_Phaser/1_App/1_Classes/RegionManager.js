@@ -1,10 +1,37 @@
 //*** REGION MANAGER ***//
 export default class RegionManager {
-  constructor(width, height) {
-    this.width = width
-    this.height = height
+  constructor(state, tileSize) {
+    this.width = state.width
+    this.height = state.height
+    this.state = state
+    this.tileSize = tileSize
+    this.lockManager = null
+  }
+
+  // handles clicks in phaser canvas
+  handleClick(e, ctrl) {
+    if (!this.state.layout) return
+    
+    // convert pixel coord to tiles
+    const tx = Math.floor(e.layerX / this.tileSize)
+    const ty = Math.floor(e.layerY / this.tileSize)
+    
+    if (this.state.layout.layoutMap[ty][tx] <= 0) return // ignore empty regions
+
+    // check if clicking a region (structure)
+    for (let region of this.state.layout.worldFacts) {
+      if (this.isClickInRegion(tx, ty, region)) {
+        if (ctrl) this.regenerateRegion(region)  // regen
+        else this.lockManager.toggleStructureLock(region) // lock region
+        break
+      }
+    }
   }
   
+  regenerateRegion(region){
+    console.log(region)
+  }
+
   // marks regions as locked (to prevent regeneration) 
   lockRegions(tilemap, regions, state) {
     const result = Array.from({ length: this.height }, () => Array(this.width).fill(-1))
@@ -120,5 +147,21 @@ export default class RegionManager {
     }
     
     return removed
+  }
+
+  // compare click coords to struct bounding box
+  isClickInRegion(tx, ty, struct) {
+    const box = struct.boundingBox
+    const br = {
+      x: box.topLeft.x + box.width,
+      y: box.topLeft.y + box.height
+    }
+    
+    return (
+      box.topLeft.x <= tx &&
+      box.topLeft.y <= ty &&
+      br.x >= tx &&
+      br.y >= ty
+    )
   }
 }

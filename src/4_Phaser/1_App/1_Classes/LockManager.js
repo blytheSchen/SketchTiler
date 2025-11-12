@@ -1,45 +1,9 @@
 //*** LOCK HANDLER ***//
 export default class LockManager {
-  constructor(state, displayManager, regionManager, tileSize) {
+  constructor(state, displayManager, regionManager) {
     this.state = state
     this.display = displayManager
     this.regions = regionManager
-    this.tileSize = tileSize
-  }
-  
-  // handles clicks in phaser canvas
-  handleClick(e) {
-    if (!this.state.layout) return
-    
-    // convert pixel coord to tiles
-    const tx = Math.floor(e.layerX / this.tileSize)
-    const ty = Math.floor(e.layerY / this.tileSize)
-    
-    if (this.state.layout.layoutMap[ty][tx] <= 0) return // ignore empty regions
-
-    // check if clicking a region (structure)
-    for (let struct of this.state.layout.worldFacts) {
-      if (this.isClickInStructure(tx, ty, struct)) {
-        this.toggleStructureLock(struct)  // lock structure
-        break
-      }
-    }
-  }
-  
-  // compare click coords to struct bounding box
-  isClickInStructure(tx, ty, struct) {
-    const box = struct.boundingBox
-    const br = {
-      x: box.topLeft.x + box.width,
-      y: box.topLeft.y + box.height
-    }
-    
-    return (
-      box.topLeft.x <= tx &&
-      box.topLeft.y <= ty &&
-      br.x >= tx &&
-      br.y >= ty
-    )
   }
   
   // structure lock toggle
@@ -150,12 +114,12 @@ export default class LockManager {
         type: type,
         region: {
           topLeft: {
-            x: box.topLeft.x * this.tileSize + 1,
-            y: box.topLeft.y * this.tileSize + 1
+            x: box.topLeft.x * this.regions.tileSize + 1,
+            y: box.topLeft.y * this.regions.tileSize + 1
           },
           bottomRight: {
-            x: br.x * this.tileSize - 1,
-            y: br.y * this.tileSize - 1
+            x: br.x * this.regions.tileSize - 1,
+            y: br.y * this.regions.tileSize - 1
           }
         }
       }
