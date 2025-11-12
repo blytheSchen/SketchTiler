@@ -71,7 +71,12 @@ export default class Autotiler extends Phaser.Scene {
   initializeManagers() {
     this.state = new StateManager(this.width, this.height)
     this.displayManager = new DisplayManager(this, this.tileSize)
-    this.regionManager = new RegionManager(this.state, this.tileSize)
+    this.regionManager = new RegionManager(
+      this.state, 
+      this.tileSize, 
+      this.displayManager,
+      this.generators
+    )
     this.lockHandler = new LockManager(
       this.state,
       this.displayManager,
@@ -129,9 +134,13 @@ export default class Autotiler extends Phaser.Scene {
     this.input.keyboard.on('keydown', function (e) {
       ctrl = (e.key === "Control")
     })
+    this.input.keyboard.on('keyup', function (e) {
+      if(ctrl && e.key === "Control"){ ctrl = false }
+    })
     const canvas = document.getElementById("phaser")
     if (canvas) {
       canvas.onclick = (e) => this.regionManager.handleClick(e, ctrl)
+      ctrl = false
     }
   }
   

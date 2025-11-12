@@ -1,11 +1,15 @@
 //*** REGION MANAGER ***//
 export default class RegionManager {
-  constructor(state, tileSize) {
+  constructor(state, tileSize, display, generators) {
     this.width = state.width
     this.height = state.height
     this.state = state
     this.tileSize = tileSize
+
+    this.display = display
     this.lockManager = null
+
+    this.generators = generators
   }
 
   // handles clicks in phaser canvas
@@ -29,7 +33,29 @@ export default class RegionManager {
   }
   
   regenerateRegion(region){
-    console.log(region)
+    // clear region in display maps
+    this.clearRegion(region.boundingBox, this.state.wfcResult)
+    this.clearRegion(region.boundingBox, this.state.userTiles)
+    this.clearRegion(region.boundingBox, this.state.lockedTiles)
+
+    // regenerate
+    // WFC: call region-specific model
+    const gen = this.generators[region.type](region.boundingBox)
+    
+    if (!gen) {
+      console.warn(`Structure generation failed: ${structure.type} at (${region.topLeft.x}, ${region.topLeft.y})`)
+    }
+    
+    // put generated tiles in final tilemap 
+    this.copyRegionTiles(region.boundingBox, gen, this.state.wfcResult)
+    // TODO: should this be copied to locked tiles or user tiles??
+    // maybe also remove sketched region when we regen, then redraw if locked?
+    // or, IF this was a locked region, auto-lock?
+    // likewise: IF this region was drawn, add back to user tiles
+
+    this.display.displayMap('structs', this.state.wfcResult, 'tilemap')
+    this.display.displayMap('sketch', this.state.userTiles, 'tilemap', 1, 1)
+    this.display.displayMap('locked', this.state.lockedTiles, 'tilemap', 1, 1)
   }
 
   // marks regions as locked (to prevent regeneration) 
