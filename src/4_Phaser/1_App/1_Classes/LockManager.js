@@ -48,7 +48,7 @@ export default class LockManager {
     const existingIndex = this.findExistingLock(struct.type, box)
     
     if (existingIndex !== null) {
-      this.unlockStructure(struct.type, existingIndex, box)
+      this.unlockStructure(struct.type, existingIndex, box, true)
     } else {
       this.lockStructure(struct, box)
     }
@@ -69,7 +69,7 @@ export default class LockManager {
   }
   
   // unlocks a locked structure
-  unlockStructure(type, index, box) {
+  unlockStructure(type, index, box, dispatch) {
     const region = this.state.lockedRegions[type][index]
 
     // remove tiles from locked display
@@ -82,7 +82,25 @@ export default class LockManager {
     this.state.lockedRegions[type].splice(index, 1)
     
     // erase struct on sketch canvas
-    this.dispatchSketchEvent('phaserErase', type, box)
+    if (dispatch) { this.dispatchSketchEvent('phaserErase', type, box) }
+  }
+
+  unlockAll() {
+    for(let type in this.state.lockedRegions){
+      const regions = this.state.lockedRegions[type]
+      if (!regions || regions.length === 0) continue
+      
+      for (let i = 0; i < regions.length; i++) {
+        const region = regions[i]
+        const box = {
+          topLeft: region.topLeft,
+          width: region.width,
+          height: region.height,
+        }
+
+        this.unlockStructure(type, 0, box)
+      }
+    }
   }
   
   // locks a structure

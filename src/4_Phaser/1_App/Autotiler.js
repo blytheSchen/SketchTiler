@@ -6,6 +6,7 @@
 //  - fix undo/redo bugs after unlocking a locked region
 //      - puts empty tiles atm :( should probably replace removes tiles which means more state tracking in phaser yayyyy
 //      - only sometimes puts empty?? why  
+//      - click to unlock -> undo -> empty
 //  - clicking on user drawn regions in phaser canvas draws a rect around the sketched region. 
 //      - maybe skip canvas dispatch when we click user regions
 //  - do more testing to catch anything else i fear im missing something 
@@ -71,7 +72,7 @@ export default class Autotiler extends Phaser.Scene {
     this.state = new StateManager(this.width, this.height)
     this.displayManager = new DisplayManager(this, this.tileSize)
     this.regionManager = new RegionManager(this.width, this.height)
-    this.clickHandler = new LockManager(
+    this.lockHandler = new LockManager(
       this.state,
       this.displayManager,
       this.regionManager,
@@ -125,7 +126,7 @@ export default class Autotiler extends Phaser.Scene {
     // CANVAS CLICK
     const canvas = document.getElementById("phaser")
     if (canvas) {
-      canvas.onclick = (e) => this.clickHandler.handleClick(e)
+      canvas.onclick = (e) => this.lockHandler.handleClick(e)
     }
   }
   
@@ -182,6 +183,8 @@ export default class Autotiler extends Phaser.Scene {
     this.displayManager.clearDisplay('structs')
     this.displayManager.setLayoutVisibility(false)
 
+    this.lockHandler.unlockAll()
+
     // disable map export
     const exportBtn = document.getElementById("export-map-button")
     exportBtn.disabled = true
@@ -201,9 +204,15 @@ export default class Autotiler extends Phaser.Scene {
       
       if (this.state.lockedRegions[region.type]) {
         // remove from locked regions
-        this.state.lockedRegions[region.type] = this.state.lockedRegions[region.type].filter(
-          box => !this.regionManager.regionsMatch(box, region)
-        )
+        console.log(region)
+        const b = { topLeft: region.topLeft, bottomRight: region.bottomRight }
+        const i = this.lockHandler.findExistingLock(region.type, b)
+
+        this.lockHandler.unlockStructure(region.type, i, b)
+
+        // this.state.lockedRegions[region.type] = this.state.lockedRegions[region.type].filter(
+          // box => !this.regionManager.regionsMatch(box, region)
+        // )
         
         // clean up
         if (this.state.lockedRegions[region.type].length === 0) {
