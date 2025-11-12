@@ -4,20 +4,25 @@ export default class LockManager {
     this.state = state
     this.display = displayManager
     this.regions = regionManager
+
+    this.sketchCheck = false
+    window.addEventListener("returnCheck", (e) => { this.sketchCheck = e.detail.drawn })
   }
-  
+
   // structure lock toggle
   toggleStructureLock(struct) {
     const box = struct.boundingBox
     const existingIndex = this.findExistingLock(struct.type, box)
 
-    // if clicked structure is a user structure, then do not dispatch event
-    const dispatch = !this.regions.regionOverlap(struct.boundingBox, this.state.userRegions)
+    // check if clicked structure is already drawn
+    this.dispatchSketchEvent('checkSketch', struct.type, box)
+    console.log(this.sketchCheck)
+    const drawn = this.sketchCheck;
     
     if (existingIndex !== null) {
-      this.unlockStructure(struct.type, existingIndex, box, true)
+      this.unlockStructure(struct.type, existingIndex, box, drawn)  // will erase if drawn = true
     } else {
-      this.lockStructure(struct, box, dispatch)
+      this.lockStructure(struct, box, !drawn) // will draw is not already drawn (aka if drawn = false)
     }
   }
   

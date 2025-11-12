@@ -184,6 +184,27 @@ sketchCanvas.addEventListener("mouseleave", (e) => {
 	sketchCanvas.dispatchEvent(movedTool);
 });
 
+// Receives a region and checks whether there are already display lines there (?)
+window.addEventListener("checkSketch", (e) => {
+	let drawn = false
+
+	for(let i = 0; i < displayList.length; i++) {
+		const stroke = displayList[i]
+		for (const point of stroke.line.points) {
+			if (pointInRegion(point, e.detail.region)) {
+				drawn = true
+				break
+			}
+		}
+	}
+
+	// sends check result to Phaser scene
+	const returnCheck = new CustomEvent("returnCheck", { 
+		detail: {drawn: drawn} 
+	});
+	window.dispatchEvent(returnCheck);
+})
+
 // Receives region to be drawn from Phaser
 window.addEventListener("mapToSketch", (e) => {
 	// simulate a button press
@@ -314,7 +335,7 @@ function erase(region){
 	for(let i = 0; i < displayList.length; i++) {
 		const stroke = displayList[i]
 		for (const point of stroke.line.points) {
-			if (pointInEraseRegion(point, region)) {
+			if (pointInRegion(point, region)) {
 				displayList.splice(i, 1)
 				break
 			}
@@ -327,7 +348,7 @@ function erase(region){
 	sketchCanvas.dispatchEvent(changeDraw);
 }
 
-function pointInEraseRegion(point, region) {
+function pointInRegion(point, region) {
 	// TODO: sketchpad erasing
 
 	// rectangular erase for phaser erase
