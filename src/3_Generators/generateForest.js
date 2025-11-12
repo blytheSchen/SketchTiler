@@ -1,6 +1,6 @@
 import WFCModel from "../2_WFC/1_Model/WFCModel.js";
 import IMAGES from "../2_WFC/2_Input/IMAGES.js";
-import TILEMAP from "../4_Phaser/TILEMAP.js";
+import TILEMAP from "../4_Phaser/3_Utils/tilemap.js";
 
 const model = new WFCModel().learn(IMAGES.FORESTS, 2);
 const tinytown = TILEMAP["tiny_town"];

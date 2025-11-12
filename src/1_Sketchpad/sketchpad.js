@@ -250,7 +250,7 @@ clearButton.onclick = () => {
 const generateButton = document.getElementById("generate-button");
 generateButton.onclick = () => {
 	// label strokes with structure type
-	showDebugText(ctx, displayList);
+	// showDebugText(ctx, displayList);
 	
 	// sends sketch data to Phaser scene
 	const toPhaser = new CustomEvent("generate", { 

@@ -1,9 +1,9 @@
 import Phaser from "../../lib/phaserModule.js";
-import TILEMAP from "./tilemap.js";
-import Autotiler from "./Autotiler.js";
+import TILEMAP from "./3_Utils/tilemap.js";
+import Autotiler from "./1_App/Autotiler.js";
 
-//import Sketch from "./1_Demos/Sketch.js";
-//import WFC from "./1_Demos/WFC.js";
+//import Sketch from "./2_Demos/Sketch.js";
+//import WFC from "./2_Demos/WFC.js";
 
 // import HouseDataMiner from "../5_Utility/HouseDataMiner.js";
 // import HouseDataMiner2 from "../5_Utility/HouseDataMiner2.js";

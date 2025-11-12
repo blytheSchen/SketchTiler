@@ -4,7 +4,7 @@
  * based on the current TILEMAP configuration. Also renders a visual grid overlay.
  */
 
-import TILEMAP from "../4_Phaser/tilemap.js";
+import TILEMAP from "../4_Phaser/3_Utils/tilemap.js";
 import "./sketchpad.js"; // so the file is executed
 
 const tilesetInfo = TILEMAP["tiny_town"];

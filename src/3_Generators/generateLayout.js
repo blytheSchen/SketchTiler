@@ -1,8 +1,8 @@
 import WFCModel from "../2_WFC/1_Model/wfcModel.js";
 import IMAGES from "../2_WFC/2_Input/images.js";
-import TILEMAP from "../4_Phaser/tilemap.js";
+import TILEMAP from "../4_Phaser/3_Utils/tilemap.js";
 import Layout from "../5_Utility/getWorldLayout.js";
-import STRUCTURE_TILES from "../4_Phaser/structureTiles.js";
+import STRUCTURE_TILES from "../4_Phaser/3_Utils/structureTiles.js";
 
 const colortiles = TILEMAP["color_tiles"];
 const tilesetInfo = TILEMAP["tiny_town"];

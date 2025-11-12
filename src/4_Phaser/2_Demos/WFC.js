@@ -5,7 +5,7 @@ import generateHouse from "../../3_Generators/generateHouse.js";
 import generateForest from "../../3_Generators/generateForest.js";
 import generateFence from "../../3_Generators/generateFence.js";
 import Layout from "../../5_Utility/getWorldLayout.js";
-import STRUCTURE_TILES from "../structureTiles.js";
+import STRUCTURE_TILES from "../3_Utils/structureTiles.js";
 import BENCHMARK from "../../5_Utility/Benchmarking.js";
 
 // hide sketchpad elements

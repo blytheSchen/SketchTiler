@@ -1,4 +1,4 @@
-import TILEMAP from "../4_Phaser/TILEMAP.js";
+import TILEMAP from "../4_Phaser/3_Utils/tilemap.js";
 
 const tinytown = TILEMAP["tiny_town"];
 
