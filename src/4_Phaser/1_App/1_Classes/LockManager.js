@@ -16,7 +16,6 @@ export default class LockManager {
 
     // check if clicked structure is already drawn
     this.dispatchSketchEvent('checkSketch', struct.type, box)
-    console.log(this.sketchCheck)
     const drawn = this.sketchCheck;
     
     if (existingIndex !== null) {
