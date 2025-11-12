@@ -5,7 +5,7 @@ export default class RegionManager {
     this.height = height
   }
   
-  // marks regions as marked (to prevent regeneration) 
+  // marks regions as locked (to prevent regeneration) 
   lockRegions(tilemap, regions, state) {
     const result = Array.from({ length: this.height }, () => Array(this.width).fill(-1))
     
