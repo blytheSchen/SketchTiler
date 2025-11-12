@@ -1,0 +1,303 @@
+[
+  {
+    "request": "add more trees to the selected area",
+    "selection": { "x": 5, "y": 5, "width": 10, "height": 10 },
+    "mapMeta": { "width": 25, "height": 25, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 100, "emptyTiles": 60, "density": 0.4 }
+  },
+  {
+    "request": "place a small house in the center",
+    "selection": { "x": 10, "y": 10, "width": 8, "height": 8 },
+    "mapMeta": { "width": 30, "height": 30, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 64, "emptyTiles": 50, "density": 0.2 }
+  },
+  {
+    "request": "create a forest in this region",
+    "selection": { "x": 0, "y": 0, "width": 15, "height": 15 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 225, "emptyTiles": 200, "density": 0.1 }
+  },
+  {
+    "request": "add a path from left to right",
+    "selection": { "x": 0, "y": 10, "width": 20, "height": 3 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 60, "emptyTiles": 55, "density": 0.08 }
+  },
+  {
+    "request": "remove all structures from this area",
+    "selection": { "x": 5, "y": 5, "width": 10, "height": 10 },
+    "mapMeta": { "width": 25, "height": 25, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 100, "emptyTiles": 20, "density": 0.8 }
+  },
+  {
+    "request": "add scattered flowers throughout",
+    "selection": { "x": 2, "y": 2, "width": 12, "height": 12 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 144, "emptyTiles": 100, "density": 0.3 }
+  },
+  {
+    "request": "place two houses with spacing",
+    "selection": { "x": 5, "y": 5, "width": 15, "height": 10 },
+    "mapMeta": { "width": 25, "height": 25, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 150, "emptyTiles": 130, "density": 0.13 }
+  },
+  {
+    "request": "create a dense forest cluster",
+    "selection": { "x": 8, "y": 8, "width": 8, "height": 8 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 64, "emptyTiles": 60, "density": 0.06 }
+  },
+  {
+    "request": "add a vertical path",
+    "selection": { "x": 10, "y": 0, "width": 3, "height": 20 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 60, "emptyTiles": 58, "density": 0.03 }
+  },
+  {
+    "request": "replace grass with flowers in selection",
+    "selection": { "x": 3, "y": 3, "width": 8, "height": 8 },
+    "mapMeta": { "width": 15, "height": 15, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 64, "emptyTiles": 10, "density": 0.84 }
+  },
+  {
+    "request": "add trees around the edges",
+    "selection": { "x": 0, "y": 0, "width": 20, "height": 20 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 400, "emptyTiles": 300, "density": 0.25 }
+  },
+  {
+    "request": "create a small village with 3 houses",
+    "selection": { "x": 5, "y": 5, "width": 15, "height": 15 },
+    "mapMeta": { "width": 25, "height": 25, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 225, "emptyTiles": 200, "density": 0.11 }
+  },
+  {
+    "request": "add bushes between existing trees",
+    "selection": { "x": 4, "y": 4, "width": 10, "height": 10 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 100, "emptyTiles": 50, "density": 0.5 }
+  },
+  {
+    "request": "clear the center area",
+    "selection": { "x": 8, "y": 8, "width": 6, "height": 6 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 36, "emptyTiles": 5, "density": 0.86 }
+  },
+  {
+    "request": "add a diagonal path from top-left to bottom-right",
+    "selection": { "x": 0, "y": 0, "width": 15, "height": 15 },
+    "mapMeta": { "width": 15, "height": 15, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 225, "emptyTiles": 210, "density": 0.07 }
+  },
+  {
+    "request": "place a large house in the corner",
+    "selection": { "x": 0, "y": 0, "width": 8, "height": 8 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 64, "emptyTiles": 60, "density": 0.06 }
+  },
+  {
+    "request": "add random decorative tiles",
+    "selection": { "x": 5, "y": 5, "width": 12, "height": 12 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 144, "emptyTiles": 120, "density": 0.17 }
+  },
+  {
+    "request": "create a tree border around the selection",
+    "selection": { "x": 2, "y": 2, "width": 16, "height": 16 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 256, "emptyTiles": 220, "density": 0.14 }
+  },
+  {
+    "request": "add a pond in the middle",
+    "selection": { "x": 8, "y": 8, "width": 5, "height": 5 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 25, "emptyTiles": 23, "density": 0.08 }
+  },
+  {
+    "request": "fill with grass tiles",
+    "selection": { "x": 0, "y": 0, "width": 10, "height": 10 },
+    "mapMeta": { "width": 15, "height": 15, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 100, "emptyTiles": 95, "density": 0.05 }
+  },
+  {
+    "request": "add yellow trees sparsely",
+    "selection": { "x": 3, "y": 3, "width": 10, "height": 10 },
+    "mapMeta": { "width": 18, "height": 18, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 100, "emptyTiles": 80, "density": 0.2 }
+  },
+  {
+    "request": "create a crossroad intersection",
+    "selection": { "x": 8, "y": 8, "width": 6, "height": 6 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 36, "emptyTiles": 30, "density": 0.17 }
+  },
+  {
+    "request": "add houses along the path",
+    "selection": { "x": 0, "y": 8, "width": 20, "height": 8 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 160, "emptyTiles": 140, "density": 0.13 }
+  },
+  {
+    "request": "remove trees but keep flowers",
+    "selection": { "x": 5, "y": 5, "width": 8, "height": 8 },
+    "mapMeta": { "width": 18, "height": 18, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 64, "emptyTiles": 30, "density": 0.53 }
+  },
+  {
+    "request": "add a small garden area",
+    "selection": { "x": 10, "y": 10, "width": 6, "height": 6 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 36, "emptyTiles": 32, "density": 0.11 }
+  },
+  {
+    "request": "create a dense housing area",
+    "selection": { "x": 2, "y": 2, "width": 12, "height": 12 },
+    "mapMeta": { "width": 16, "height": 16, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 144, "emptyTiles": 130, "density": 0.1 }
+  },
+  {
+    "request": "add trees in a grid pattern",
+    "selection": { "x": 4, "y": 4, "width": 12, "height": 12 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 144, "emptyTiles": 120, "density": 0.17 }
+  },
+  {
+    "request": "place a fence around the area",
+    "selection": { "x": 5, "y": 5, "width": 10, "height": 10 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 100, "emptyTiles": 85, "density": 0.15 }
+  },
+  {
+    "request": "add natural-looking tree clusters",
+    "selection": { "x": 3, "y": 3, "width": 14, "height": 14 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 196, "emptyTiles": 170, "density": 0.13 }
+  },
+  {
+    "request": "create a town square",
+    "selection": { "x": 8, "y": 8, "width": 8, "height": 8 },
+    "mapMeta": { "width": 24, "height": 24, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 64, "emptyTiles": 60, "density": 0.06 }
+  },
+  {
+    "request": "add bushes along the path edges",
+    "selection": { "x": 0, "y": 9, "width": 20, "height": 5 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 100, "emptyTiles": 80, "density": 0.2 }
+  },
+  {
+    "request": "place a single large tree",
+    "selection": { "x": 10, "y": 10, "width": 4, "height": 4 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 16, "emptyTiles": 15, "density": 0.06 }
+  },
+  {
+    "request": "add flowers in corners",
+    "selection": { "x": 0, "y": 0, "width": 15, "height": 15 },
+    "mapMeta": { "width": 15, "height": 15, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 225, "emptyTiles": 200, "density": 0.11 }
+  },
+  {
+    "request": "create a winding path",
+    "selection": { "x": 2, "y": 2, "width": 16, "height": 16 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 256, "emptyTiles": 240, "density": 0.06 }
+  },
+  {
+    "request": "add mixed vegetation",
+    "selection": { "x": 5, "y": 5, "width": 10, "height": 10 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 100, "emptyTiles": 75, "density": 0.25 }
+  },
+  {
+    "request": "place houses in a row",
+    "selection": { "x": 2, "y": 10, "width": 16, "height": 6 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 96, "emptyTiles": 85, "density": 0.11 }
+  },
+  {
+    "request": "add decorative elements randomly",
+    "selection": { "x": 4, "y": 4, "width": 12, "height": 12 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 144, "emptyTiles": 130, "density": 0.1 }
+  },
+  {
+    "request": "create a forest edge",
+    "selection": { "x": 0, "y": 0, "width": 20, "height": 5 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 100, "emptyTiles": 80, "density": 0.2 }
+  },
+  {
+    "request": "add a central monument",
+    "selection": { "x": 9, "y": 9, "width": 4, "height": 4 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 16, "emptyTiles": 14, "density": 0.13 }
+  },
+  {
+    "request": "place trees symmetrically",
+    "selection": { "x": 5, "y": 5, "width": 10, "height": 10 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 100, "emptyTiles": 90, "density": 0.1 }
+  },
+  {
+    "request": "add a marketplace area",
+    "selection": { "x": 6, "y": 6, "width": 8, "height": 8 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 64, "emptyTiles": 58, "density": 0.09 }
+  },
+  {
+    "request": "create a park with trees and flowers",
+    "selection": { "x": 4, "y": 4, "width": 12, "height": 12 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 144, "emptyTiles": 120, "density": 0.17 }
+  },
+  {
+    "request": "add a residential block",
+    "selection": { "x": 3, "y": 3, "width": 14, "height": 14 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 196, "emptyTiles": 175, "density": 0.11 }
+  },
+  {
+    "request": "place scattered rocks",
+    "selection": { "x": 2, "y": 2, "width": 16, "height": 16 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 256, "emptyTiles": 240, "density": 0.06 }
+  },
+  {
+    "request": "add a tree-lined avenue",
+    "selection": { "x": 0, "y": 8, "width": 20, "height": 6 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 120, "emptyTiles": 100, "density": 0.17 }
+  },
+  {
+    "request": "create a corner garden",
+    "selection": { "x": 0, "y": 0, "width": 8, "height": 8 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 64, "emptyTiles": 55, "density": 0.14 }
+  },
+  {
+    "request": "add houses with yards",
+    "selection": { "x": 4, "y": 4, "width": 12, "height": 12 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 144, "emptyTiles": 130, "density": 0.1 }
+  },
+  {
+    "request": "place a fountain in the center",
+    "selection": { "x": 9, "y": 9, "width": 3, "height": 3 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 9, "emptyTiles": 8, "density": 0.11 }
+  },
+  {
+    "request": "add wildflowers throughout",
+    "selection": { "x": 3, "y": 3, "width": 14, "height": 14 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 196, "emptyTiles": 170, "density": 0.13 }
+  },
+  {
+    "request": "create a village entrance",
+    "selection": { "x": 8, "y": 0, "width": 6, "height": 8 },
+    "mapMeta": { "width": 20, "height": 20, "tilesetCols": 12, "tilesetRows": 11 },
+    "stats": { "totalTiles": 48, "emptyTiles": 42, "density": 0.13 }
+  }
+]
+

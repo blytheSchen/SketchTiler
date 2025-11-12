@@ -1,14 +1,23 @@
 // server/planGenerator.js
 // Plan generation using base model or fine-tuned models
 
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load .env from server directory
+dotenv.config({ path: path.join(__dirname, '.env') });
+
 import OpenAI from "openai";
 import { validatePlan } from "./schema.js";
 import { validateAllFailuresOnly } from "./validators.js";
-import { 
-  logInvalidPlan, 
-  logValidPlan, 
-  logPlanRetry, 
-  logModelSelection 
+import {
+  logInvalidPlan,
+  logValidPlan,
+  logPlanRetry,
+  logModelSelection
 } from "./logger.js";
 import { getActiveModel, getOpenAIModelId } from "./fineTuning.js";
 

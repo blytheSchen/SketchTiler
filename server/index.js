@@ -48,6 +48,7 @@ import {
   getModelInfo,
   pollJobUntilComplete
 } from "./fineTuning.js";
+import { runABTest, printABTestSummary } from "./abTest.js";
 
 /* ---------------- App & static ---------------- */
 const app = express();
@@ -959,16 +960,165 @@ app.get("/api/logs/:category", (req, res) => {
     const { category } = req.params;
     const limit = parseInt(req.query.limit) || 100;
     const logs = getRecentLogs(category, limit);
-    
+
     res.json({
       ok: true,
       category,
       count: logs.length,
       logs,
     });
-    
+
   } catch (err) {
     console.error("GET /api/logs/:category error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/* ================ A/B TESTING ================ */
+
+/**
+ * POST /api/ab-test
+ * Run A/B test comparing base model vs fine-tuned model
+ * Body: { ftModelName, testRequests?, numRequests? }
+ */
+app.post("/api/ab-test", async (req, res) => {
+  try {
+    const {
+      ftModelName,
+      testRequests = null,
+      numRequests = 50,
+    } = req.body || {};
+
+    if (!ftModelName) {
+      return res.status(400).json({
+        ok: false,
+        error: "ftModelName is required"
+      });
+    }
+
+    // Load test requests from file if not provided
+    let requests = testRequests;
+    if (!requests) {
+      const testRequestsPath = path.join(__dirname, "data", "ab_test", "test_requests.json");
+
+      if (!fs.existsSync(testRequestsPath)) {
+        return res.status(400).json({
+          ok: false,
+          error: "No test requests provided and default file not found"
+        });
+      }
+
+      const fileContent = fs.readFileSync(testRequestsPath, "utf8");
+      const allRequests = JSON.parse(fileContent);
+      requests = allRequests.slice(0, numRequests);
+    }
+
+    // Run A/B test
+    const results = await runABTest(ftModelName, requests, {
+      saveResults: true,
+      verbose: false,
+    });
+
+    res.json({
+      ok: true,
+      results,
+      summary: {
+        testId: results.testId,
+        ftModelName: results.ftModelName,
+        totalRequests: results.totalRequests,
+        base: {
+          schemaValidPercent: results.base.schemaValidPercent,
+          validatorPassPercent: results.base.validatorPassPercent,
+          successPercent: results.base.successPercent,
+        },
+        ft: {
+          schemaValidPercent: results.ft.schemaValidPercent,
+          validatorPassPercent: results.ft.validatorPassPercent,
+          successPercent: results.ft.successPercent,
+        },
+        acceptance: results.acceptance,
+      }
+    });
+
+  } catch (err) {
+    console.error("POST /api/ab-test error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/ab-test/results
+ * List all A/B test results
+ */
+app.get("/api/ab-test/results", (req, res) => {
+  try {
+    const resultsDir = path.join(__dirname, "data", "ab_test", "results");
+
+    if (!fs.existsSync(resultsDir)) {
+      return res.json({
+        ok: true,
+        results: [],
+      });
+    }
+
+    const files = fs.readdirSync(resultsDir)
+      .filter(f => f.endsWith(".json"))
+      .sort()
+      .reverse();
+
+    const results = files.map(file => {
+      const filePath = path.join(resultsDir, file);
+      const content = fs.readFileSync(filePath, "utf8");
+      const data = JSON.parse(content);
+
+      return {
+        testId: data.testId,
+        timestamp: data.timestamp,
+        ftModelName: data.ftModelName,
+        totalRequests: data.totalRequests,
+        acceptance: data.acceptance,
+        file: file,
+      };
+    });
+
+    res.json({
+      ok: true,
+      count: results.length,
+      results,
+    });
+
+  } catch (err) {
+    console.error("GET /api/ab-test/results error:", err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+/**
+ * GET /api/ab-test/results/:testId
+ * Get detailed results for a specific A/B test
+ */
+app.get("/api/ab-test/results/:testId", (req, res) => {
+  try {
+    const { testId } = req.params;
+    const resultsFile = path.join(__dirname, "data", "ab_test", "results", `${testId}.json`);
+
+    if (!fs.existsSync(resultsFile)) {
+      return res.status(404).json({
+        ok: false,
+        error: `Test results not found: ${testId}`
+      });
+    }
+
+    const content = fs.readFileSync(resultsFile, "utf8");
+    const results = JSON.parse(content);
+
+    res.json({
+      ok: true,
+      results,
+    });
+
+  } catch (err) {
+    console.error("GET /api/ab-test/results/:testId error:", err);
     res.status(500).json({ ok: false, error: err.message });
   }
 });

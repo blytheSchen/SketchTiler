@@ -1,13 +1,18 @@
 // server/fineTuning.js
 // Fine-tuning job creation, monitoring, and model management
 
-import OpenAI from "openai";
+import dotenv from "dotenv";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { logFineTuningJob } from "./logger.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load .env from server directory
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+import OpenAI from "openai";
+import { logFineTuningJob } from "./logger.js";
 const FT_DATA_DIR = path.join(__dirname, "data", "fine_tuning");
 const FT_STATE_FILE = path.join(FT_DATA_DIR, "state.json");
 
@@ -280,9 +285,16 @@ export function getModelInfo(modelName) {
       status: "ready",
     };
   }
-  
+
   const state = loadState();
-  return state.models[modelName] || null;
+  const model = state.models[modelName];
+  if (!model) return null;
+
+  // Normalize field name: openaiModelId -> openaiId
+  return {
+    ...model,
+    openaiId: model.openaiModelId || model.openaiId,
+  };
 }
 
 /**
