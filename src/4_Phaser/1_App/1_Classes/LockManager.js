@@ -46,11 +46,14 @@ export default class LockManager {
   toggleStructureLock(struct) {
     const box = struct.boundingBox
     const existingIndex = this.findExistingLock(struct.type, box)
+
+    // if clicked structure is a user structure, then do not dispatch event
+    const dispatch = !this.regions.regionOverlap(struct.boundingBox, this.state.userRegions)
     
     if (existingIndex !== null) {
       this.unlockStructure(struct.type, existingIndex, box, true)
     } else {
-      this.lockStructure(struct, box)
+      this.lockStructure(struct, box, dispatch)
     }
   }
   
@@ -104,7 +107,7 @@ export default class LockManager {
   }
   
   // locks a structure
-  lockStructure(struct, box) {
+  lockStructure(struct, box, dispatch) {
     if (!this.state.lockedRegions[struct.type]) {
       this.state.lockedRegions[struct.type] = []
     }
@@ -132,7 +135,7 @@ export default class LockManager {
     
     // dispatch event to draw region on sketch canvas
     // (prevent user overlaps)
-    this.dispatchSketchEvent('mapToSketch', struct.type, box)
+    if(dispatch){ this.dispatchSketchEvent('mapToSketch', struct.type, box) }
   }
   
   // dispacth event to draw region on sketch canvas
