@@ -735,7 +735,7 @@ export default class Autotiler extends Phaser.Scene {
     // capture canvas as an image
     const canvas = window.game.canvas
     const dataURL = canvas.toDataURL("image/PNG")
-    const base64Data = dataURL.replace(/^data:image\/(png|jpg)base64,/, "")
+    const base64Data = dataURL.replace(/^data:image\/(png|jpg);base64,/, "")
     
     // download
     zip.file("tilemapImage.png", base64Data, { base64: true })
