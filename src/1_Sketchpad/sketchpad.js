@@ -43,6 +43,7 @@ let undoStack = []; // Snapshots of canvas state for undo operations
 let redoStack = []; // Snapshots of canvas state for redo operations
 
 let activeButton; // Active structure type selected via button (e.g. 'house', 'tree').
+let currentActiveButton;
 
 // Structure buttons setup
 for (const type in conf.structures) {
@@ -55,6 +56,13 @@ for (const type in conf.structures) {
 		mouseObject.mouse.hue = structure.color;
 		button.style.borderColor = structure.color;  
 		activeButton = type;
+
+		if(currentActiveButton && currentActiveButton != button)
+			currentActiveButton.classList.remove("active");
+
+		button.classList.add("active");
+
+		currentActiveButton = button;
 	}
 }
 // Default to 'house' for initial selected marker
@@ -159,7 +167,8 @@ sketchCanvas.addEventListener("mouseup", (ev) => {
 		undoStack.pop();	// also forget this canvas state
 	} else {
 		// normalize strokes (if normalize toggle is checked)
-		normalizing = document.getElementById("normalize-toggle").checked;
+		let normalizeButton = document.getElementById("normalize-button")
+		let normalizing = normalizeButton.classList.contains("active");
 		if (normalizing) normalizeStrokes(displayList, sketchCanvas);
 
 		// clear redo history
@@ -217,11 +226,11 @@ generateButton.onclick = () => {
 }
 
 // Normalize strokes (straighten lines, find shapes, etc)
-const normalizeToggle = document.getElementById("normalize-toggle");
-let normalizing = normalizeToggle.checked;
+const normalizeToggle = document.getElementById("normalize-button");
 normalizeToggle.onclick = () => {
 	// update normalizing tracker bool to reflect toggle value
-	normalizing = document.getElementById("normalize-toggle").checked;
+	//normalizing = document.getElementById("normalize-toggle").checked;
+	let normalizing = normalizeToggle.classList.toggle("active")
 	if (normalizing){ 
 		normalizeStrokes(displayList, sketchCanvas); 
 		sketchCanvas.dispatchEvent(changeDraw); // Re-render the canvas after simplifying

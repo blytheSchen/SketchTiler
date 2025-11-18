@@ -5,36 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SketchTiler</title>
     <link rel="stylesheet" href="/src/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css"> -->
   </head>
   <body>
     <div id="page">
 
       <!-- SKETCHTILER APP -->
       <div id="app">
+        <!-- sketchpad buttons -->
+        <div id="buttons">
+          <!-- STRUCTURE BUTTONS -->
+          <div id="structure_buttons">
+            <button id="house-button" class="house_button">House</button>
+            <button id="forest-button" class="forest_button">Forest</button>
+            <button id="fence-button" class="fence_button">Fence</button>
+            <button id="path-button" class="path_button">Path</button>
+          </div>
+
+          <!-- different spacing for smaller buttons -->
+          <div id="smaller_buttons">
+            <button id="undo-button" class="undo_button">U</button>
+            <button id="redo-button" class="undo_button">R</button>
+            <button id="lasso-button" class="undo_button">L</button>
+          </div>
+
+          <!-- Normalize and Clear Buttons-->
+           <div id="vertical_settings">
+              <button id="normalize-button" class="long_button">Normalize</button> 
+              <button id="clear-button" class="long_button">Clear</button> 
+           </div>
+        </div>
+
         <!-- SKETCHPAD -->
         <div id="sketchpad">
           <canvas id="grid-canvas"></canvas>
           <canvas id="sketch-canvas"></canvas>
         </div>
-        <!-- sketchpad buttons -->
-        <div id="buttons">
-          <button id="house-button" class="button is-danger">House</button>
-          <button id="forest-button" class="button is-success">Forest</button>
-          <button id="fence-button" class="button is-info">Fence</button>
-          <span id="normalize">
-            <input id="normalize-toggle"
-              type="checkbox" 
-              class="onoffswitch-checkbox"  
-              checked="true"
-            />
-            Normalize
-          </span>
-          <button id="undo-button" class="button is-light">Undo</button>
-          <button id="redo-button" class="button is-light">Redo</button>
-          <button id="generate-button" class="button is-light">Generate</button>
-          <button id="clear-button" class="button is-light">Clear</button>
-        </div>
+
+        <!-- GENERATE & EXTRA SETTINGS -->
+         <div id="bottom_buttons">
+          <button id="generate-button" class="generate_button">Generate</button>
+         </div>
 
         <!-- PHASER -->
         <div style="display:flex; overflow:hidden; gap: 1em;">

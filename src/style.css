@@ -1,5 +1,15 @@
+@import url('https://font.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600&display=swap');
+
 #page {
   display: flex;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #222;
 }
 
 #sketchpad {
@@ -11,6 +21,7 @@
   cursor: none;
 }
 
+/* Defaults are 500px x 400px */
 #pattern-panel {
   width: 500px;
   height: 400px;
@@ -48,6 +59,227 @@
   float: right;
 }
 
+#buttons {
+  background-color: #333;
+  padding: 1rem;
+  display: flex;
+  gap: 20px;
+}
+
+#bottom_buttons {
+  width: 95.5%;
+  background-color: #333;
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+#structure_buttons {
+  display: flex;
+  gap: 7px;
+}
+
+#smaller_buttons {
+  display: flex;
+  gap: 7px;
+}
+
 #profileMessage {
   white-space: pre-line;
+}
+
+#vertical_settings {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.long_button {
+  width: 115px;
+  height: 20px;
+  font-size: 12px;
+  border-width: medium;
+  border-style: solid;
+  border-color: white;
+  font-family: 'Poppins', sans-serif;
+  border-radius: 10px;
+  color: white;
+  background-color: #222;
+  transition: transform 0.3s ease;
+  outline: none;
+  box-shadow: none;  
+}
+
+.house_button {
+  width: 83px;
+  height: 50px;
+  font-size: 20px;
+  border-width: medium;
+  border-style: solid;
+  border-color: blue;
+  font-family: 'Poppins', sans-serif;
+  border-radius: 10px;
+  color: white;
+  background-color: #222;
+  transition: transform 0.3s ease;
+  outline: none;
+  box-shadow: none;
+}
+
+.forest_button {
+  width: 83px;
+  height: 50px;
+  font-size: 20px;
+  border-width: medium;
+  border-style: solid;
+  border-color: #59B383;
+  font-family: 'Poppins', sans-serif;
+  border-radius: 10px;
+  color: white;
+  background-color: #222;
+  transition: transform 0.3s ease;
+  outline: none;
+  box-shadow: none;
+}
+
+.path_button {
+  width: 83px;
+  height: 50px;
+  font-size: 20px;
+  border-width: medium;
+  border-style: solid;
+  border-color: #B38559;
+  font-family: 'Poppins', sans-serif;
+  border-radius: 10px;
+  color: white;
+  background-color: #222;
+  transition: transform 0.3s ease;
+  outline: none;
+  box-shadow: none;
+}
+
+.fence_button {
+  width: 83px;
+  height: 50px;
+  font-size: 20px;
+  border-width: medium;
+  border-style: solid;
+  border-color: #7484A6;
+  font-family: 'Poppins', sans-serif;
+  border-radius: 10px;
+  color: white;
+  background-color: #222;
+  transition: transform 0.3s ease;
+  outline: none;
+  box-shadow: none;
+}
+
+.undo_button {
+  width: 50px;
+  height: 50px;
+  font-size: 20px;
+  border-width: medium;
+  border-style: solid;
+  border-color: white;
+  font-family: 'Poppins', sans-serif;
+  border-radius: 10px;
+  color: white;
+  background-color: #222;
+  transition: transform 0.3s ease;
+  outline: none;
+  box-shadow: none;
+}
+
+.forest_button {
+  width: 83px;
+  height: 50px;
+  font-size: 20px;
+  border-width: medium;
+  border-style: solid;
+  border-color: #59B383;
+  font-family: 'Poppins', sans-serif;
+  border-radius: 10px;
+  color: white;
+  background-color: #222;
+  transition: transform 0.3s ease;
+  outline: none;
+  box-shadow: none;
+}
+
+.generate_button {
+  width: 170px;
+  height: 50px;
+  font-size: 20px;
+  border-width: medium;
+  border-style: solid;
+  border-color: #59B383;
+  font-family: 'Poppins', sans-serif;
+  border-radius: 10px;
+  color: white;
+  background-color: #222;
+  transition: transform 0.3s ease;
+  outline: none;
+  box-shadow: none;
+}
+
+.house_button:hover {
+  transform: translateY(-5px);
+  color: #DA6969;
+}
+
+.house_button.active {
+  background-color: #DA6969;
+  color: #333;
+}
+
+.forest_button:hover {
+  transform: translateY(-5px);
+  color: #59B383;
+}
+
+.forest_button.active {
+  background-color: #59B383;
+  color: #333;
+}
+
+.path_button:hover {
+  transform: translateY(-5px);
+  color: #B38559;
+}
+
+.path_button.active {
+  background-color: #B38559;
+  color: #333;
+}
+
+.fence_button:hover {
+  transform: translateY(-5px);
+  color: #7484A6;
+}
+
+.fence_button.active {
+  background-color: #3273dc;
+  color: #333;
+}
+
+.undo_button:hover {
+  transform: translateY(-5px);
+}
+
+.long_button:hover {
+  transform: translateY(-5px);
+  background-color: white;
+  color: #333;
+}
+
+.long_button.active {
+  background-color: white;
+  color: #333;
+}
+
+.generate_button:hover {
+  transform: translateY(-5px);
+  background-color: #59B383;
+  color: #333;
 }
