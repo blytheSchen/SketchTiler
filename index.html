@@ -34,11 +34,13 @@
           <button id="redo-button" class="button is-light">Redo</button>
           <button id="generate-button" class="button is-light">Generate</button>
           <button id="clear-button" class="button is-light">Clear</button>
+          <button id="worldfacts-button" class="button is-light" style="margin-left:16px;">World Facts</button>
         </div>
 
         <!-- PHASER -->
-        <div style="display:flex; overflow:hidden; gap: 1em;">
+        <div style="display:flex; overflow:hidden; gap: 1em; align-items:flex-start;">
           <div id="phaser"></div>
+          <div id="worldfacts-panel" style="width:320px; max-height:600px; overflow:auto; white-space:pre-wrap; padding:8px; border-left:1px solid #ddd; background:#fafafa; font-family:monospace; font-size:13px; margin-left:16px;"></div>
           <div id="pattern-panel"></div>
         </div>
 

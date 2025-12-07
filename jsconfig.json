@@ -1,5 +1,5 @@
 {
-	"include": ["**/*.js", "**/*.d.ts"],
+	"include": ["**/*.js", "**/*.d.ts", "src/4_Phaser/worldfacts.ts"],
 	"compilerOptions": {
 		"lib": ["ESNext", "DOM"]
 	}

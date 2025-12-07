@@ -216,6 +216,16 @@ generateButton.onclick = () => {
 	window.dispatchEvent(toPhaser);
 }
 
+// World facts button: request the Phaser scene to print/compute world facts
+const worldFactsButton = document.getElementById("worldfacts-button");
+if (worldFactsButton) {
+	worldFactsButton.onclick = () => {
+		window.dispatchEvent(new CustomEvent("printWorldFacts", {
+			detail: { sketch: displayList, structures: conf && conf.structures }
+		}));
+	};
+}
+
 // Normalize strokes (straighten lines, find shapes, etc)
 const normalizeToggle = document.getElementById("normalize-toggle");
 let normalizing = normalizeToggle.checked;
