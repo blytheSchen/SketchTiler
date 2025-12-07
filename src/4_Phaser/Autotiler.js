@@ -9,7 +9,6 @@ import generatePaths from "../3_Generators/generatePaths.js";
 import { Regions } from "../1_Sketchpad/1_Classes/regions.js";
 import { exportSketch } from "../1_Sketchpad/sketchpad.js";
 import generateLayout from "../3_Generators/generateLayout.js";
-import renderWorldFacts from "./worldfactsRenderer.js";
 
 // hide demo elements
 document.getElementById("wfc-demo").classList.add("hidden");
@@ -82,33 +81,6 @@ export default class Autotiler extends Phaser.Scene {
     window.addEventListener("redoSketch", (e) => {
       //console.log("TODO: implement redo functionality");
     });
-    // Listen for UI requests to print world facts; write into the right-hand panel
-    window.addEventListener("printWorldFacts", (e) => {
-      const panel = document.getElementById("worldfacts-panel");
-      if (!panel) return;
-
-      // Prefer Layout.worldFacts when available and render as English
-      if (this.latestLayout && this.latestLayout.worldFacts) {
-        try {
-          panel.innerHTML = renderWorldFacts(this.latestLayout.worldFacts);
-        } catch (err) {
-          panel.textContent = String(this.latestLayout.worldFacts);
-        }
-        return;
-      }
-
-      // Fallback: render the sketch payload in a readable way
-      if (e && e.detail && e.detail.sketch) {
-        try {
-          panel.innerHTML = `<div class=\"wf-sketch\">Sketch strokes: <pre>${JSON.stringify(e.detail.sketch, null, 2)}</pre></div>`;
-        } catch (err) {
-          panel.textContent = String(e.detail.sketch);
-        }
-        return;
-      }
-
-      panel.textContent = "No generated layout or sketch available to show world facts.";
-    });
   }
 
   // calls generators
@@ -121,9 +93,6 @@ export default class Autotiler extends Phaser.Scene {
       2/*, 
       true*/
     );
-
-    // store layout for UI/inspection (world facts display)
-    this.latestLayout = layout;
 
     // call structure generators on each region in completed layout
     let map = this.generateTilemapFromLayout(layout);
