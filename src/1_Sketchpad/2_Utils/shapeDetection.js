@@ -12,6 +12,8 @@ const sketchCanvas = document.getElementById("sketch-canvas");
  * @returns {{name: string, points: Point[]}|false} Shape name and normalized points, or false if no match.
  */
 export function getShape(pts) {
+    window.generatedTriangles = null;
+    
     const circle = isCircle(pts);
     if (circle) return { name: "circle", points: circle };
 
@@ -20,6 +22,28 @@ export function getShape(pts) {
 
     const tri = isTriangle(pts);
     if (tri) return { name: "triangle", points: tri };
+
+    if (isClosed(pts)) {
+        // Clean up the lines slightly so we don't have 1000s of tiny triangles
+        const simplifiedPts = ramerDouglasPeucker(pts, 10);
+        
+        if (!isClockwise(simplifiedPts)) {
+            simplifiedPts.reverse();
+        }
+
+        // Triangulate the polygon
+        const triangles = triangulate(simplifiedPts);
+
+        window.generatedTriangles = triangles;
+
+        // Does not show for very long, but this is the debugging code
+        setTimeout(() => {
+            const ctx = sketchCanvas.getContext("2d");
+            drawDebugTriangles(ctx, triangles);
+        }, 1000); // Waits 1000ms (1 second) before drawing
+        
+        return { name: "polygon", triangles: triangles, points: simplifiedPts };
+    }
 
     return false;
 }
@@ -275,4 +299,143 @@ export function countSharpAngles(points, angleThreshold = 110) {
 
     return sharpAngles;
 }
+
+function triangulate(pts) {
+    console.log("Triangulating polygon with", pts.length, "points");
+    // Clone points so we don't destroy the original drawing data
+    let vertices = [...pts]; 
+    const triangles = [];
+
+    // Ear Clipping Loop
+    while (vertices.length > 3) {
+        for (let i = 0; i < vertices.length; i++) {
+            // Get 3 consecutive points
+            const a = vertices[i];
+            const b = vertices[(i + 1) % vertices.length];
+            const c = vertices[(i + 2) % vertices.length];
+
+            // 1. Check if angle at B is convex (less than 180)
+            if (isConvex(a, b, c)) {
+                // 2. Check if no other point is inside this triangle
+                if (!containsPoints(a, b, c, vertices)) {
+                    // It's an ear! Clip it.
+                    triangles.push([a, b, c]);
+                    
+                    // Remove vertex b from the list
+                    vertices.splice((i + 1) % vertices.length, 1);
+                    break; 
+                }
+            }
+        }
+    }
+    
+    // The remaining 3 vertices form the final triangle
+    triangles.push([vertices[0], vertices[1], vertices[2]]);
+    
+    return triangles;
+}
   
+/**
+ * Checks if the angle at vertex b (formed by a->b->c) is convex (less than 180 degrees).
+ * This assumes the polygon vertices are ordered (usually clockwise).
+ */
+function isConvex(a, b, c) {
+    // Cross product of vectors (b-a) and (c-b)
+    // In screen coordinates (y points down), the sign tells us the turn direction.
+    const crossProduct = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+    
+    // This is why there is that reverse() call earlier - we want clockwise order
+    return crossProduct < 0; 
+}
+
+/**
+ * Checks if any vertex in the remaining polygon list lies INSIDE the triangle abc.
+ * We must ignore a, b, and c themselves.
+ */
+function containsPoints(a, b, c, vertices) {
+    for (let i = 0; i < vertices.length; i++) {
+        const p = vertices[i];
+        // Skip the vertices that make up the triangle itself
+        if (p === a || p === b || p === c) continue;
+
+        if (pointInTriangle(p, a, b, c)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function pointInTriangle(p, a, b, c) {
+    const v0 = { x: c.x - a.x, y: c.y - a.y };
+    const v1 = { x: b.x - a.x, y: b.y - a.y };
+    const v2 = { x: p.x - a.x, y: p.y - a.y };
+
+    const dot00 = (v0.x * v0.x) + (v0.y * v0.y);
+    const dot01 = (v0.x * v1.x) + (v0.y * v1.y);
+    const dot02 = (v0.x * v2.x) + (v0.y * v2.y);
+    const dot11 = (v1.x * v1.x) + (v1.y * v1.y);
+    const dot12 = (v1.x * v2.x) + (v1.y * v2.y);
+
+    const invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+    const u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+    const v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+    return (u >= 0) && (v >= 0) && (u + v < 1);
+}
+
+function isClockwise(pts) {
+    // Sum over the edges: (x2 - x1) * (y2 + y1)
+    let sum = 0;
+    for (let i = 0; i < pts.length; i++) {
+        const current = pts[i];
+        const next = pts[(i + 1) % pts.length];
+        sum += (next.x - current.x) * (next.y + current.y);
+    }
+    return sum > 0;
+}
+
+// DEBUGGER: Draws the calculated triangles onto the canvas.
+function drawDebugTriangles(ctx, triangles) {
+    ctx.save();
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.8;
+
+    for (const tri of triangles) {
+        ctx.beginPath();
+        ctx.moveTo(tri[0].x, tri[0].y);
+        ctx.lineTo(tri[1].x, tri[1].y);
+        ctx.lineTo(tri[2].x, tri[2].y);
+        ctx.closePath();
+        ctx.stroke();
+    }
+    
+    // Draw the vertices as dots so we can see the "corners"
+    ctx.fillStyle = 'green';
+    for (const tri of triangles) {
+        for(const p of tri){
+             ctx.beginPath();
+             ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+             ctx.fill();
+        }
+    }
+
+    // Draw Bounding Box (Blue)
+    // Calculate bounds from the triangles
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    for (const tri of triangles) {
+        for (const p of tri) {
+            if (p.x < minX) minX = p.x;
+            if (p.y < minY) minY = p.y;
+            if (p.x > maxX) maxX = p.x;
+            if (p.y > maxY) maxY = p.y;
+        }
+    }
+    
+    ctx.strokeStyle = 'blue';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+
+    ctx.restore();
+}

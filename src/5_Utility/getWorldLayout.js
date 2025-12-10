@@ -48,7 +48,10 @@ export default class Layout{
         }
     }
 
+    // Most of my modifications are in this function
     initLayout(){
+        // Pretty sure this is right 
+        const TILE_SIZE = 16;
         for (let structure of this.worldFacts) {
             if (structure.trace) {
                 for (let { x, y } of structure.trace) {
@@ -63,6 +66,32 @@ export default class Layout{
                 
                 for(let x = startX; x < w; x++){
                     for(let y = startY; y < h; y++){
+                        // Triangle logic
+                        if (window.generatedTriangles && window.generatedTriangles.length > 0) {
+                            
+                            // 1. Calculate the center pixel of this grid cell
+                            const pixelX = (x * TILE_SIZE) + (TILE_SIZE / 2);
+                            const pixelY = (y * TILE_SIZE) + (TILE_SIZE / 2);
+
+                            let isInsideAnyTriangle = false;
+
+                            // 2. Check if this pixel is inside ANY of the red triangles
+                            for (const tri of window.generatedTriangles) {
+                                if (pointInTriangle(pixelX, pixelY, 
+                                    tri[0].x, tri[0].y, 
+                                    tri[1].x, tri[1].y, 
+                                    tri[2].x, tri[2].y)) {
+                                    isInsideAnyTriangle = true;
+                                    break;
+                                }
+                            }
+
+                            // 3. If it's not inside the L-shape, SKIP IT (leave it empty)
+                            if (!isInsideAnyTriangle) {
+                                continue; 
+                            }
+                        }
+                        
                         let corner = this.getCorner(x, y, structure.boundingBox);
                         let border = this.getBorder(x, y, structure.boundingBox);
 
@@ -109,7 +138,8 @@ export default class Layout{
         const structureFacts = {
             type: structureType,
             boundingBox: this.getBoundingBox(positionArray),
-            color: structureConfig.color
+            color: structureConfig.color,
+            tiles: positionArray
         };
 
         if(structureConfig.regionType === "trace"){ 
@@ -621,4 +651,41 @@ export default class Layout{
         
         return true;
     }
+    /**
+     * Checks if point (x, y) is inside the polygon points.
+     * @param {number} x - The grid x coordinate
+     * @param {number} y - The grid y coordinate
+     * @param {Array} vertices - Array of {x, y} points defining the shape
+     */
+    isPointInPolygon(x, y, vertices) {
+        let inside = false;
+        for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
+            const xi = vertices[i].x, yi = vertices[i].y;
+            const xj = vertices[j].x, yj = vertices[j].y;
+            
+            const intersect = ((yi > y) !== (yj > y)) &&
+                (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                
+            if (intersect) inside = !inside;
+        }
+        return inside;
+    }
+}
+
+function pointInTriangle(px, py, ax, ay, bx, by, cx, cy) {
+    const v0x = cx - ax, v0y = cy - ay;
+    const v1x = bx - ax, v1y = by - ay;
+    const v2x = px - ax, v2y = py - ay;
+
+    const dot00 = v0x * v0x + v0y * v0y;
+    const dot01 = v0x * v1x + v0y * v1y;
+    const dot02 = v0x * v2x + v0y * v2y;
+    const dot11 = v1x * v1x + v1y * v1y;
+    const dot12 = v1x * v2x + v1y * v2y;
+
+    const invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+    const u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+    const v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+    return (u >= 0) && (v >= 0) && (u + v < 1);
 }
